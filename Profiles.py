@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import Utilities as util
-(Sysa,NSysa,Arg)=util.Parseur(['Save'],0,'Arg : ')
-(                             [ SAVE ])=Arg
+(Sysa,NSysa,Arg)=util.Parseur(['Save','Visu'],0,'Arg : ')
+(                             [ SAVE , VISU ])=Arg
 
 from numpy import *
 from Params import *
@@ -19,7 +19,11 @@ t0=time.time()
 
 D=D0
 dirr='/mnt/d/Python/SandiaJaravel/REF/'
-dird='/mnt/d/FLUENT/Sandia-Jaravel/RUN-01-EBM/DATA/'
+# dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-01-EDM/DUMP/DATA/'
+# dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-01-EDM/DUMP-02-FRED-BFER/DATA/'
+# dird='/mnt/d/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP/DATA/'
+# dird='/mnt/d/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP-02-FRED-Fluent/DATA/'
+dird='/mnt/d/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP-02-FRED-BFER/DATA/'
 dirp=dird+'PLOT/'
 Lines=['l0','l1','l2','l3','l75','l15','l30']
 
@@ -40,6 +44,9 @@ def PlotVar(ax,var,X,M,T,TXT,BD) :
 		Ic3=T.index('co')
 		Yc=fl.Yc(M[:,Ic1],M[:,Ic2],M[:,Ic3],Mol_m)
 		Var=(Yc-Yc_o)/(Yc_f-Yc_o)
+	elif var=='co' :
+		I=T.index('co')
+		Var=M[:,I]*1e2
 	else :
 		I=T.index(var)
 		Var=M[:,I]
@@ -49,11 +56,27 @@ def PlotVar(ax,var,X,M,T,TXT,BD) :
 	ax.set_ylim((BD[2],BD[3]))
 #===================================================================================
 util.MKDIR(dirp)
+#===================================================================================
+if VISU :
+	util.Section( 'Visualisation : {:.3f} s'.format(time.time()-t0),1,5,'r' )
+	Vp=[ Lc+n*D0 for n in [1,2,3,7.5,15,30] ]
 
-figA,axA=plt.subplots(ncols=2,        figsize=(20,10))
+	fl.Visu(dird+'Data-all.dat','velocity-magnitude','Velocity [m/s]'      ,[0,0.3],[],arange(0,100,10)    ,[],(25,5),'cividis',dirp+'Visu-Velocity.png'   ,[])
+	fl.Visu(dird+'Data-all.dat','temperature'       ,'Temperature [K]'     ,[0,0.3],[],arange(250,2500,250),[],(25,5),'inferno',dirp+'Visu-Temperature.png',['LINES',Vp])
+	fl.Visu(dird+'Data-all.dat','mixC'              ,'Mixture fraction [-]',[0,0.3],[],arange(0,1.1,0.1)   ,[],(25,5),'viridis',dirp+'Visu-Mix.png'        ,['MIXC',[Mol_m,Ych4,Yco2,Yco]])
+	fl.Visu(dird+'Data-all.dat','co'                ,'Carbon monoxide [-]' ,[0,0.3],[],arange(0,11,1)      ,[],(25,5),'cividis',dirp+'Visu-CO.png'         ,['CO',1e2])
+
+	# sys.exit('=> End of visualisation')
+
+#===================================================================================
+
+figA,axA=plt.subplots(ncols=2,        figsize=(20,10)) #; figA.suptitle('Axial profiles'     ,fontsize=30)
 figT,axT=plt.subplots(ncols=2,nrows=3,figsize=(20,10)) ; figT.suptitle('Radial temperature profiles'     ,fontsize=30)
 figU,axU=plt.subplots(ncols=2,nrows=3,figsize=(20,10)) ; figU.suptitle('Radial velocity profiles'        ,fontsize=30)
 figZ,axZ=plt.subplots(ncols=2,nrows=3,figsize=(20,10)) ; figZ.suptitle('Radial mixture fraction profiles',fontsize=30)
+figC,axC=plt.subplots(ncols=2,nrows=3,figsize=(20,10)) ; figC.suptitle('Radial CO profiles'              ,fontsize=30)
+axA[0].set_title('Mean mixture fraction',fontsize=30)
+axA[1].set_title('Mean temperature'     ,fontsize=30)
 
 #=====> Axial Profiles
 ym=38
@@ -92,30 +115,33 @@ for n,l in enumerate(Lines[1:]) :
 	#=====> Read Jaravel
 	yu=65
 	yz=1.1
-	rm=2.5
-	if   i==0 : yt=2100 
-	elif i==1 : yt=2200
+	yc=4
+	if   i==0 : rtxt=2 ; yt=2100 ; rm=2.5
+	elif i==1 : rtxt=4 ; yt=2200 ; rm=5
 	if j==1 : 
 		axT[j,i].set_ylabel('<T> [K]'  ,fontsize=30)
 		axU[j,i].set_ylabel('<U> [m/s]',fontsize=30)
 		axZ[j,i].set_ylabel('<Z> [-]'  ,fontsize=30)
-	PlotIm(axT[j,i],dirr+l[1:]+'D-T.png',[0,rm,0,yt])
-	PlotIm(axU[j,i],dirr+l[1:]+'D-U.png',[0,rm,0,yu])
-	PlotIm(axZ[j,i],dirr+l[1:]+'D-Z.png',[0,rm,0,yz])
+	PlotIm(axT[j,i],dirr+l[1:]+'D-T.png' ,[0,rm,0,yt])
+	PlotIm(axU[j,i],dirr+l[1:]+'D-U.png' ,[0,rm,0,yu])
+	PlotIm(axZ[j,i],dirr+l[1:]+'D-Z.png' ,[0,rm,0,yz])
+	PlotIm(axC[j,i],dirr+l[1:]+'D-CO.png',[0,rm,0,yc])
 	axT[j,i].set_yticks(arange(0,2100,400))
 	#=====> Read simulation
 	(T,M)=fl.ReadSurf(dird+'Data-{}.dat'.format(l))
 	([Ix,Iy],[Vx,Vy])=fl.Space(T,M)
-	PlotVar(axT[j,i],'temperature'       ,Vy/D,M,T,[[2,1800],txt+'D'],[0,rm,0,2250])
-	PlotVar(axU[j,i],'velocity-magnitude',Vy/D,M,T,[[2,50  ],txt+'D'],[0,rm,0,62  ])
-	PlotVar(axZ[j,i],'mix'               ,Vy/D,M,T,[[2,0.75],txt+'D'],[0,rm,0,yz  ])
+	PlotVar(axT[j,i],'temperature'       ,Vy/D,M,T,[[rtxt,1800],txt+'D'],[0,rm,0,2250])
+	PlotVar(axU[j,i],'velocity-magnitude',Vy/D,M,T,[[rtxt,50  ],txt+'D'],[0,rm,0,62  ])
+	PlotVar(axZ[j,i],'mix'               ,Vy/D,M,T,[[rtxt,0.75],txt+'D'],[0,rm,0,yz  ])
+	PlotVar(axC[j,i],'co'                ,Vy/D,M,T,[[rtxt,0.75],txt+'D'],[0,rm,0,yc  ])
 axU[0,0].plot(2*[0.5      ],[0,60],':k')
 axU[0,0].plot(2*[0.5*D1/D0],[0,60],':k')
 
 if SAVE :
-	figA.savefig('PLOT/Profiles-Axis.pdf')
-	figT.savefig('PLOT/Profiles-T.pdf')
-	figU.savefig('PLOT/Profiles-U.pdf')
-	figZ.savefig('PLOT/Profiles-Z.pdf')
+	figA.savefig(dirp+'Profiles-Axis.pdf')
+	figT.savefig(dirp+'Profiles-T.pdf')
+	figU.savefig(dirp+'Profiles-U.pdf')
+	figZ.savefig(dirp+'Profiles-Z.pdf')
+	figC.savefig(dirp+'Profiles-CO.pdf')
 else :
 	plt.show()

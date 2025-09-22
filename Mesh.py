@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import Utilities as util
-(Sysa,NSysa,Arg)=util.Parseur(['BD','Conv','Mix','VelProf','Pos'],0,'Arg : ')
-(                             [ BD , CONV , MIX , VELPROF , POS ])=Arg
+(Sysa,NSysa,Arg)=util.Parseur(['BD','Conv','Mix','VelProf','Pos','Flow'],0,'Arg : ')
+(                             [ BD , CONV , MIX , VELPROF , POS , FLOW ])=Arg
 
 from numpy import *
 import sys
@@ -26,7 +26,8 @@ t0=time.time()
 gdim = 2  # Geometric dimension of the mesh
 
 #=====> files
-d_mesh='MESH/'
+# d_mesh='MESH/'
+d_mesh='MESH-D100/'
 d_plot='PLOT/'
 d_data='DATA/'
 name='Sandia-Jaravel'
@@ -37,13 +38,13 @@ h1=1e-4
 h2=2e-4
 hf=2e-3
 
-hfc=1e-3
-hfs=1e-3
+hfc=2e-4
+hfs=5e-4
 
 #=====> Flame refinement params
-Lr=0.1
+Lr=0.2
 Lf=4*ep
-Dr=5e-3
+Dr=1e-2
 
 #=====> Boundary layer params
 rb=1.1 # Ratio slices boundary layer
@@ -53,11 +54,21 @@ ra=0.7 # Aspect ratio last slice
 rj=0.45
 N0=10
 N1=10
-N2=10
+N2=20
 
 #===================================================================================
 #                     Processes
 #===================================================================================
+
+if FLOW :
+
+	Umax=61
+	n=round( 2/(Umax/Um-1),0 )
+	Umax=Um*(n+2)/n
+
+	print('\n=> n : {:.0f}  ,  Umax : {:.12f} \n'.format(n,Umax))
+
+	sys.exit('=> Flow rates computed')
 
 if POS :
 	#===================================================================================
@@ -78,10 +89,6 @@ if VELPROF :
 
 	np=25
 	nd=int(1e4)
-
-	Um=49.6
-	Up=11.4
-	Uc=0.9
 
 	r0=0.5*D0
 	r1=0.5*D1 ; Dr1=r1-(r0+ep)
@@ -315,7 +322,7 @@ gm.model.mesh.field.setNumber(1, "YMin", 0  )
 gm.model.mesh.field.setNumber(1, "YMax", r0 )
 gm.model.mesh.field.setNumber(1, "XMin", y2   )
 gm.model.mesh.field.setNumber(1, "XMax", y2+Lr)
-gm.model.mesh.field.setNumber(1, "Thickness",  1e-2)
+gm.model.mesh.field.setNumber(1, "Thickness",  1e-1)
 gm.model.mesh.field.add("Box", 2) # Flame side
 gm.model.mesh.field.setNumber(2, "VIn" , hfs )
 gm.model.mesh.field.setNumber(2, "VOut", hf  )
@@ -323,7 +330,7 @@ gm.model.mesh.field.setNumber(2, "YMin", r0   )
 gm.model.mesh.field.setNumber(2, "YMax", r0+Dr)
 gm.model.mesh.field.setNumber(2, "XMin", y2   )
 gm.model.mesh.field.setNumber(2, "XMax", y2+Lr)
-gm.model.mesh.field.setNumber(2, "Thickness",  1e-2)
+gm.model.mesh.field.setNumber(2, "Thickness",  1e-1)
 gm.model.mesh.field.add("Box", 3) # Flame side
 gm.model.mesh.field.setNumber(3, "VIn" , h00 )
 gm.model.mesh.field.setNumber(3, "VOut", hf  )
