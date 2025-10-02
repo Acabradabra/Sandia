@@ -20,7 +20,8 @@ t0=time.time()
 D=D0
 dirr='/mnt/d/Python/SandiaJaravel/REF/'
 # dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-01-EDM/DUMP/DATA/'
-dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-02-Laera/DUMP/DATA/'
+# dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-02-Laera/DUMP/DATA/'
+dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-02-SLF/DUMP-00-EQUIL-OD1/DATA/'
 # dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-02-Laera/DUMP-01-EDC-PB-OD1/DATA/'
 # dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-01-EDM/DUMP-02-FRED-BFER/DATA/'
 # dird='/mnt/d/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP/DATA/'
@@ -45,7 +46,7 @@ def PlotVar(ax,var,X,M,T,TXT,BD) :
 		Ic1=T.index('ch4')
 		Ic2=T.index('co2')
 		Ic3=T.index('co')
-		Yc=fl.Yc(M[:,Ic1],M[:,Ic2],M[:,Ic3],Mol_m)
+		Yc=fl.Yc( {'CH4':M[:,Ic1],'CO2':M[:,Ic2],'CO':M[:,Ic3]} , fl.Mol_m )
 		Var=(Yc-Yc_o)/(Yc_f-Yc_o)
 	elif var=='co' :
 		I=T.index('co')
@@ -66,8 +67,8 @@ if VISU :
 
 	fl.Visu(dird+'Data-all.dat','velocity-magnitude','Velocity [m/s]'        ,[0,0.3],[],arange(0,100,10)    ,[],(25,5),'cividis',dirp+'Visu-Velocity.png'   ,[])
 	fl.Visu(dird+'Data-all.dat','temperature'       ,'Temperature [K]'       ,[0,0.3],[],arange(250,2500,250),[],(25,5),'inferno',dirp+'Visu-Temperature.png',['LINES',Vp])
-	fl.Visu(dird+'Data-all.dat','mixC'              ,'Mixture fraction [-]'  ,[0,0.3],[],arange(0,1.1,0.1)   ,[],(25,5),'viridis',dirp+'Visu-Mix.png'        ,['MIXC',[Mol_m,Ych4,Yco2,Yco]])
-	fl.Visu(dird+'Data-all.dat','co'                ,'Carbon monoxide [x100]',[0,0.3],[],arange(0,11,1)    ,[],(25,5),'viridis',dirp+'Visu-CO.png'         ,['CO',1e2])
+	fl.Visu(dird+'Data-all.dat','mixC'              ,'Mixture fraction [-]'  ,[0,0.3],[],arange(0,1.1,0.1)   ,[],(25,5),'viridis',dirp+'Visu-Mix.png'        ,['MIXC',[fl.Mol_m,Y_m,Y_p,Y_o]])
+	fl.Visu(dird+'Data-all.dat','co'                ,'Carbon monoxide [x100]',[0,0.3],[],arange(0,11,1)    ,[],(25,5),'viridis',dirp+'Visu-CO.png'           ,['CO',1e2])
 
 	# sys.exit('=> End of visualisation')
 
@@ -97,10 +98,10 @@ for n,v in enumerate(['Z','T']) :
 Ic1=T.index('ch4')
 Ic2=T.index('co2')
 Ic3=T.index('co')
-Yc_f=fl.Yc(Ych4[0],Yco2[0],Yco[0],Mol_m)
-Yc_p=fl.Yc(Ych4[1],Yco2[1],Yco[1],Mol_m)
-Yc_o=fl.Yc(Ych4[2],Yco2[2],Yco[2],Mol_m)
-Yc  =fl.Yc(M[:,Ic1],M[:,Ic2],M[:,Ic3],Mol_m)
+Yc_f=fl.Yc( Y_m , fl.Mol_m )
+Yc_p=fl.Yc( Y_p , fl.Mol_m )
+Yc_o=fl.Yc( Y_o , fl.Mol_m )
+Yc  =fl.Yc( {'CH4':M[:,Ic1],'CO2':M[:,Ic2],'CO':M[:,Ic3]} , fl.Mol_m )
 Za=(Yc-Yc_o)/(Yc_f-Yc_o)
 axA[0].plot( Vx/D,Za,'r' )
 axA[0].set_ylabel('<Z> [-]',fontsize=30)
