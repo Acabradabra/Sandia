@@ -29,7 +29,6 @@ gdim = 2  # Geometric dimension of the mesh
 # d_mesh='MESH/'
 d_mesh='MESH-D100/'
 d_plot='PLOT/'
-d_data='DATA/'
 name='Sandia-Jaravel'
 
 #=====> Mesh Size
