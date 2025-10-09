@@ -20,7 +20,7 @@ import sys
 import time
 import Fluent as fl
 import FluentWally as fw
-import Params as pm
+import ParamsJaravel as pm
 
 t0=time.time()
 (plt,mtp)=util.Plot0()
@@ -29,10 +29,18 @@ t0=time.time()
 #===================================================================================
 
 # file_in='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-02-Laera/INIT-Fluent/Interp-00-Fluent.ip'
-file_in='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-02-Laera/DUMP-02-EDC-PB-OD2-FD3/DATA/Interp-EDC-FD3.ip'
+# file_in='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-00-COLD/DUMP-02-OD2/DATA/Interp-Cold.ip'
+file_in='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-01-Big/DUMP-02-UCSD-EDC/DATA/Interp-Big-UCSD.ip'
 file_ou=file_in[:-3]+'-New.ip'
 
-Adds=['mix','mix2']
+# Adds=['mix','mix2']
+# Adds=['H2Rad','Ignit']
+Adds=['Ignit']
+
+Fuel='H2'
+Tad=2400
+Tu=298
+T0=300
 
 #%%=================================================================================
 util.Section('Reading : {:.3f}'.format(time.time()-t0),1,5,'r')
@@ -53,8 +61,8 @@ X0=data_in.get_data( 'x0' )
 X1=data_in.get_data( 'x1' )
 
 #===============> Species
-if 'mix' or 'mix2' in Adds :
-    Species=['O2','H2O','CH4','CO','CO2','H2','H','O','OH','HO2','H2O2','CH3','CH2O','CH3O','CH3OH','C2H2','C2H4','C2H6','CH2CO','CH','CH2','CH2(S)','HCO','CH2OH','C2H3','C2H5','HCCO','CH2CHO','N2']
+if 'mix' in Adds or 'mix2' in Adds :
+    Species=fl.Spe_Laera
     I_h2 =Species.index('H2' )
     I_n2 =Species.index('N2' )
     I_o2 =Species.index('O2' )
@@ -106,9 +114,35 @@ if 'mix' or 'mix2' in Adds :
         F_f=(Zf-Zf_o)/(Zf_m-Zf_o) ; print('=> F_f : {:.3f}  ,  {:.3f}'.format(min(F_f),max(F_f)))
         F_p=(Zp-Zp_o)/(Zp_p-Zp_o) ; print('=> F_p : {:.3f}  ,  {:.3f}'.format(min(F_p),max(F_p)))
         F_o=1-(F_f+F_p)           ; print('=> F_o : {:.3f}  ,  {:.3f}'.format(min(F_o),max(F_o)))
+if 'H2Rad' in Adds :
+    Spe_in=fl.Spe_H2Air
+    Spe_ou=fl.Spe_UCSD
+    Nspe=[]
+    Ns_in,Ns_ou=len(Spe_in),len(Spe_ou)
+    DSPE_ou=zeros((Np,Ns_ou))
+    for n,s in enumerate(Spe_ou) :
+        Nspe.append( 'species-'+str(n) )
+        if s in Spe_in :
+            i=Spe_in.index(s)
+            DSPE_ou[:,n]=data_in.get_data( 'species-'+str(i) )
+        else :
+            print('=> Species {} not in input file'.format(s))
+else :
+    Nspe=[ data_in.variable_names[n] for n in range(Nd,Nv) if 'species' in data_in.variable_names[n] ]
+    Ns_in=len(Nspe) ; Ns_ou=Ns_in
+    DSPE_ou=zeros((Np,Ns_in))
+    for n,s in enumerate(Nspe) : 
+        DSPE_ou[:,n]=data_in.get_data( s )
+if 'Ignit' in Adds :
+    # If=Spe_in.index(Fuel)
+    # Yf=data_in.get_data( 'species-'+str(If) ) ; Yf0=min(Yf) ; Yf1=max(Yf)
+    # C=1-(Yf-Yf0)/(Yf1-Yf0) ; C=clip(C,0,1)
+    T_in=data_in.get_data( 'temperature' )
+    C=(T_in-T0)/(max(T_in)-T0) ; C=clip(C,0,1)
+    Temp=Tu+C*(Tad-Tu)
 
 #===============> Visualisation
-PLOT=True
+# PLOT=True
 if PLOT :
     c_inf=mtp.colormaps['inferno']
     c_civ=mtp.colormaps['cividis']
@@ -122,7 +156,7 @@ if PLOT :
         [0, pm.Lc,pm.Lc , 0,0 , pm.Lc,pm.Lc , pm.Ls,pm.Ls,0],
         [r0,r0 , r0+pm.ep,r0+pm.ep , r1,r1, r1+pm.ep,r1+pm.ep, r2,r2]
     ]
-    if 'mix' or 'mix2' in Adds :
+    if 'mix' in Adds or 'mix2' in Adds :
         fl.Field2(tri,Vel  ,'Vel [m/s]',False,[0,0.5],[0,r2],0,arange(0  ,100,10  ),c_civ,CMask,True,'Plot/Visu-Vel.png'  ,(20,5))
         fl.Field2(tri,Temp ,'Temp [K]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_inf,CMask,True,'Plot/Visu-Temp.png' ,(20,5))
         fl.Field2(tri,Y_ch4,'Y_ch4 [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-CH4.png'  ,(20,5))
@@ -152,13 +186,18 @@ util.Section('Writing : {:.3f}'.format(time.time()-t0),1,5,'r')
 #===================================================================================
 
 #===============> Output
-DATA_ou=zeros((Np,Nv+Nd+len(Adds)))
-for n,v in enumerate(data_in.variable_names) : DATA_ou[:,n]=data_in.get_data(v)
-if   'mix'  in Adds : DATA_ou[:,Nv+Nd ]=Mix ; Fields_ou=data_in.variable_names[Nd:]+['fmean']
-elif 'mix2' in Adds : DATA_ou[:,Nv+Nd:]=[Yf,Yp] ; Fields_ou=data_in.variable_names[Nd:]+['fmean','fmean2']
-else                : Fields_ou=data_in.variable_names[Nd:]
+Fields_ou=data_in.variable_names[Nd:-Ns_in]+Nspe
+if 'mix'  in Adds : Fields_ou+=['fmean']
+if 'mix2' in Adds : Fields_ou+=['fmean2']
+Nv_ou=len(Fields_ou) ; Nv0=Nd+Nv-Ns_in
 
-Nv_ou=len(Fields_ou)
+DATA_ou=zeros((Np,Nd+Nv_ou))
+for n,v in enumerate(data_in.variable_names[:-Ns_in]) : 
+    DATA_ou[:,n]=data_in.get_data(v)
+DATA_ou[:,Nv0:Nv0+Ns_ou]=DSPE_ou
+if   'mix'  in Adds : DATA_ou[:,Nv0+Ns_ou ]= Mix    ; Fields_ou=data_in.variable_names[Nd:]+['fmean']
+elif 'mix2' in Adds : DATA_ou[:,Nv0+Ns_ou:]=[Yf,Yp] ; Fields_ou=data_in.variable_names[Nd:]+['fmean','fmean2']
+if 'Ignit'  in Adds : DATA_ou[:,Nd+Fields_ou.index('temperature')]=Temp 
 
 fou=open(file_ou,'w')
 fou.write( '3\n' )

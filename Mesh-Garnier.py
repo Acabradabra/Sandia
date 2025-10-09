@@ -12,8 +12,8 @@ if ip is not None:
 #                     Modules
 #===================================================================================
 import Utilities as util
-(Sysa,NSysa,Arg)=util.Parseur(['BD'],0,'Arg : ')
-(                             [ BD ])=Arg
+(Sysa,NSysa,Arg)=util.Parseur(['BD','Flow'],0,'Arg : ')
+(                             [ BD , FLOW ])=Arg
 
 from numpy import *
 import sys
@@ -36,21 +36,21 @@ t0=time.time()
 gdim = 2  # Geometric dimension of the mesh
 
 #=====> files
-d_mesh='MESH-GARNIER/'
+d_mesh='MESH-GARNIER-Big/'
 d_plot='PLOT/'
-name='Sandia-Garnier'
+name='Sandia-Garnier-Big'
 
 #=====> Mesh Size
 h0=1e-4
 h1=2e-4
-he=1e-3
-hf=2e-3
+he=5e-3
+hf=5e-3
 
-hfc=2e-4
-hfs=5e-4
+hfc=1e-4
+hfs=2e-4
 
 #=====> Flame refinement params
-Lr=0.2  # Refinement length
+Lr=0.3  # Refinement length
 Lf=4*ep # Refinement foot
 Dr=1e-2
 
@@ -62,6 +62,29 @@ ra=0.7 # Aspect ratio last slice
 rj0=0.45
 N0=10
 N1=10
+
+#===================================================================================
+#                     Processes
+#===================================================================================
+
+if FLOW : 
+
+    Re=1e4
+    Umoy=296
+    n=20
+    Umax=Umoy*(n+2)/n
+    # nu=8.411e-6
+    # U=Re*nu/D0
+
+    print('=> Flow rate : Umoy {:.12f} [m/s]  ,  Umax {:.12f} [m/s]'.format(Umoy,Umax))
+
+    Ld=180 # Undiluted flame length L/d
+    Pos=[1/8,1/4,3/8,1/2,5/8,3/4,1]
+    for p in Pos :
+        pos=p*Ld*D0+Lc
+        print('=> Position {:.5f} [m]'.format(pos))
+
+    sys.exit('=> Flow rates computed')
 
 #%%=================================================================================
 util.Section( 'Geometrie : {:.3f} s'.format(time.time()-t0),1,5,'r' )
@@ -178,19 +201,19 @@ gm.model.mesh.field.add("Box", 1) # Flame center
 gm.model.mesh.field.setNumber(1, "VIn" , hfc )
 gm.model.mesh.field.setNumber(1, "VOut", hf  )
 gm.model.mesh.field.setNumber(1, "YMin", 0  )
-gm.model.mesh.field.setNumber(1, "YMax", r0 )
+gm.model.mesh.field.setNumber(1, "YMax", r1 )
 gm.model.mesh.field.setNumber(1, "XMin", Lc   )
 gm.model.mesh.field.setNumber(1, "XMax", Lc+Lr)
-gm.model.mesh.field.setNumber(1, "Thickness",  2e-2)
+gm.model.mesh.field.setNumber(1, "Thickness",  5e-2)
 gm.model.mesh.field.add("Box", 2) # Flame side
 gm.model.mesh.field.setNumber(2, "VIn" , hfs )
 gm.model.mesh.field.setNumber(2, "VOut", hf  )
 gm.model.mesh.field.setNumber(2, "YMin", r0   )
-gm.model.mesh.field.setNumber(2, "YMax", r0+Dr)
+gm.model.mesh.field.setNumber(2, "YMax", r1+Dr)
 gm.model.mesh.field.setNumber(2, "XMin", Lc   )
 gm.model.mesh.field.setNumber(2, "XMax", Lc+Lr)
-gm.model.mesh.field.setNumber(2, "Thickness",  2e-2)
-gm.model.mesh.field.add("Box", 3) # Flame side
+gm.model.mesh.field.setNumber(2, "Thickness",  1e-1)
+gm.model.mesh.field.add("Box", 3) # Flame foot
 gm.model.mesh.field.setNumber(3, "VIn" , h10 )
 gm.model.mesh.field.setNumber(3, "VOut", hf  )
 gm.model.mesh.field.setNumber(3, "YMin", r0  )
@@ -202,10 +225,10 @@ gm.model.mesh.field.add("Box", 4) # Coflow
 gm.model.mesh.field.setNumber(4, "VIn" , h1 )
 gm.model.mesh.field.setNumber(4, "VOut", hf  )
 gm.model.mesh.field.setNumber(4, "YMin", r1  )
-gm.model.mesh.field.setNumber(4, "YMax", r2*0.1)
+gm.model.mesh.field.setNumber(4, "YMax", r1+Dr)
 gm.model.mesh.field.setNumber(4, "XMin", 0   )
 gm.model.mesh.field.setNumber(4, "XMax", Lc  )
-gm.model.mesh.field.setNumber(4, "Thickness",2e-2)
+gm.model.mesh.field.setNumber(4, "Thickness",5e-2)
 gm.model.mesh.field.add("Min", 5)
 gm.model.mesh.field.setNumbers(5, "FieldsList", [1,2,3,4])
 gm.model.mesh.field.setAsBackgroundMesh(5)

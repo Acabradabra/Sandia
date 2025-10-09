@@ -6,7 +6,6 @@ import Utilities as util
 (                             [ SAVE , VISU ])=Arg
 
 from numpy import *
-from Params import *
 import sys
 import time
 import Fluent as fl
@@ -16,21 +15,23 @@ t0=time.time()
 #===================================================================================
 #                     Parameters
 #===================================================================================
+Fuel='H2'
+# Fuel='CH4'
+if   Fuel=='H2' :
+	from ParamsGarnier import *
+	dirr='/mnt/d/Python/SandiaJaravel/REF-Garnier/'
+	Lines=['l00','l18','l14','l38','l12','l58','l34','l11']
+elif Fuel=='CH4' :
+	from ParamsJaravel import *
+	dirr='/mnt/d/Python/SandiaJaravel/REF-Jaravel/'
+	Lines=['l0','l1','l2','l3','l75','l15','l30']
+else :
+	sys.exit('=> Error : Fuel not recognized')
+
+dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-00-Small/DUMP-04-UCSD-EDC/DATA/'
+dirp=dird+'PLOT/'
 
 D=D0
-dirr='/mnt/d/Python/SandiaJaravel/REF/'
-# dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-01-EDM/DUMP/DATA/'
-# dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-02-Laera/DUMP/DATA/'
-dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-02-SLF/DUMP-00-EQUIL-OD1/DATA/'
-# dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-02-Laera/DUMP-01-EDC-PB-OD1/DATA/'
-# dird='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-01-EDM/DUMP-02-FRED-BFER/DATA/'
-# dird='/mnt/d/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP/DATA/'
-# dird='/mnt/d/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP-02-FRED-Fluent/DATA/'
-# dird='/mnt/d/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP-02-FRED-BFER/DATA/'
-# dird='/mnt/d/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP-03-EDC-BFER/DATA/'
-dirp=dird+'PLOT/'
-Lines=['l0','l1','l2','l3','l75','l15','l30']
-
 #===================================================================================
 #                     reading
 #===================================================================================
@@ -68,7 +69,7 @@ if VISU :
 	fl.Visu(dird+'Data-all.dat','velocity-magnitude','Velocity [m/s]'        ,[0,0.3],[],arange(0,100,10)    ,[],(25,5),'cividis',dirp+'Visu-Velocity.png'   ,[])
 	fl.Visu(dird+'Data-all.dat','temperature'       ,'Temperature [K]'       ,[0,0.3],[],arange(250,2500,250),[],(25,5),'inferno',dirp+'Visu-Temperature.png',['LINES',Vp])
 	fl.Visu(dird+'Data-all.dat','mixC'              ,'Mixture fraction [-]'  ,[0,0.3],[],arange(0,1.1,0.1)   ,[],(25,5),'viridis',dirp+'Visu-Mix.png'        ,['MIXC',[fl.Mol_m,Y_m,Y_p,Y_o]])
-	fl.Visu(dird+'Data-all.dat','co'                ,'Carbon monoxide [x100]',[0,0.3],[],arange(0,11,1)    ,[],(25,5),'viridis',dirp+'Visu-CO.png'           ,['CO',1e2])
+	fl.Visu(dird+'Data-all.dat','co'                ,'Carbon monoxide [x100]',[0,0.3],[],arange(0,11,1)      ,[],(25,5),'viridis',dirp+'Visu-CO.png'         ,['CO',1e2])
 
 	# sys.exit('=> End of visualisation')
 
