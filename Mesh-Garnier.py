@@ -79,11 +79,9 @@ if FLOW :
     print('=> Flow rate : Umoy {:.12f} [m/s]  ,  Umax {:.12f} [m/s]'.format(Umoy,Umax))
 
     Ld=180 # Undiluted flame length L/d
-    Pos=[1/8,1/4,3/8,1/2,5/8,3/4,1]
     for p in Pos :
         pos=p*Ld*D0+Lc
         print('=> Position {:.5f} [m]'.format(pos))
-
     sys.exit('=> Flow rates computed')
 
 #%%=================================================================================
