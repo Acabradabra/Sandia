@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+#%%=================================================================================
+from IPython import get_ipython
+
+ip = get_ipython()
+if ip is not None:
+    ip.run_line_magic("load_ext", "autoreload")
+    ip.run_line_magic("autoreload", "2")
+#%%=================================================================================
+#                     Modules
+#===================================================================================
 import Utilities as util
 (Sysa,NSysa,Arg)=util.Parseur(['Save','Visu'],0,'Arg : ')
 (                             [ SAVE , VISU ])=Arg
@@ -12,7 +22,7 @@ import Fluent as fl
 
 t0=time.time()
 (plt,mtp)=util.Plot0()
-#===================================================================================
+#%%=================================================================================
 #                     Parameters
 #===================================================================================
 # Fuel='H2'
@@ -25,16 +35,17 @@ elif Fuel=='CH4' :
 	from ParamsJaravel import *
 	dirr='/mnt/d/Python/SandiaJaravel/REF-Jaravel/'
 	Lines=['l0','l1','l2','l3','l75','l15','l30']
+	# dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP/DATA/'
+	dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-02-Laera/DUMP/DATA/'
 else :
 	sys.exit('=> Error : Fuel not recognized')
 
-dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP/DATA/'
 # dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-00-Small/DUMP-04-UCSD-EDC/DATA/'
 # dird='/mnt/d/FLUENT/Sandia-Jaravel/RUN-01-EBM/DUMP-04-ED/DATA/'
 dirp=dird+'PLOT/'
 
 D=D0
-#===================================================================================
+#%%=================================================================================
 #                     reading
 #===================================================================================
 def PlotIm(ax,pic,Ext) :
@@ -57,7 +68,7 @@ if VISU :
 
 	# sys.exit('=> End of visualisation')
 
-#===================================================================================
+#%%=================================================================================
 
 figA,axA=plt.subplots(ncols=2,        figsize=(20,10)) #; figA.suptitle('Axial profiles'     ,fontsize=30)
 figB,axB=plt.subplots(ncols=2,        figsize=(20,10)) #; figA.suptitle('Axial profiles'     ,fontsize=30)
@@ -70,7 +81,10 @@ axA[0].set_title('Mean mixture fraction',fontsize=30)
 axA[1].set_title('Mean temperature'     ,fontsize=30)
 Col=len(Lines)*['r']
 
-#=====> Axial Profiles A
+#==========> Read Simulation
+(M)=fl.ReadSurfD(dird+'Data-l0.dat')
+([Vx,Vy])=fl.SpaceD(M)
+#==========> Axial Profiles A
 ym=38
 Ym=[1.1,2e3]
 Yt=[[0,0.5,1],arange(0,2100,500)]
@@ -79,27 +93,35 @@ for n,v in enumerate(['Z','T']) :
 	PlotIm( axA[n],dirr+'0D-{}.png'.format(v),[0,ym,0,Ym[n]] )
 	axA[n].set_yticks(Yt[n])
 	axA[n].set_xlim((0,ym))
-#=====> Read Simulation
-(T,M)=fl.ReadSurf(dird+'Data-l0.dat')
-([Ix,Iy],[Vx,Vy])=fl.Space(T,M)
 #===> Mixture Fraction
-Ic1=T.index('ch4')
-Ic2=T.index('co2')
-Ic3=T.index('co')
 Yc_f=fl.Yc( BC_m , fl.Mol_m )
 Yc_p=fl.Yc( BC_p , fl.Mol_m )
 Yc_o=fl.Yc( BC_o , fl.Mol_m )
-Yc  =fl.Yc( {'CH4':M[:,Ic1],'CO2':M[:,Ic2],'CO':M[:,Ic3]} , fl.Mol_m )
+Yc  =fl.Yc( {'CH4':M['ch4'],'CO2':M['co2'],'CO':M['co']} , fl.Mol_m )
 Za=(Yc-Yc_o)/(Yc_f-Yc_o)
 axA[0].plot( Vx/D,Za,'r' )
 axA[0].set_ylabel('<Z> [-]',fontsize=30)
 #===> Temperature
-It=T.index('temperature')
-axA[1].plot( Vx/D,M[:,It],'r' )
+axA[1].plot( Vx/D,M['temperature'],'r' )
 axA[1].set_ylabel('<T> [K]',fontsize=30)
+#==========> Axial Profiles B
+y0=-0.7
+Ym=[6,7]
+Yt=[[0,2,4,6],[0,2,4,6]]
+for n,v in enumerate(['CO','NO']) :
+	#=====> Read Jaravel
+	PlotIm( axB[n],dirr+'0D-{}.png'.format(v),[0,ym,y0,Ym[n]] )
+	axB[n].set_yticks(Yt[n])
+	axB[n].set_xlim(( 0,ym   ))
+	axB[n].set_ylim((y0,Ym[n]))
+#===> CO
+axB[0].plot( Vx/D,M['co']*1e2,'r' )
+axB[0].set_ylabel(r'<$Y_{CO}$> [$x100$]',fontsize=30)
+#===> NO
+axB[1].plot( Vx/D,M['mf-pollut-pollutant-0']*1e6,'r' )
+axB[1].set_ylabel(r'<$Y_{NO}$> [$x10^6$]',fontsize=30)
 
-#=====> Axial Profiles B
-
+#%%=================================================================================
 
 #=====> Radial Profiles
 for n,l in enumerate(Lines[1:]) :
@@ -137,12 +159,15 @@ axU[0,0].plot(2*[0.5      ],[0,60],':k')
 axU[0,0].plot(2*[0.5*D1/D0],[0,60],':k')
 
 if SAVE :
-	figA.savefig(dirp+'Profiles-Axis.pdf')
-	figT.savefig(dirp+'Profiles-T.pdf')
-	figU.savefig(dirp+'Profiles-U.pdf')
-	figZ.savefig(dirp+'Profiles-Z.pdf')
-	figC.savefig(dirp+'Profiles-CO.pdf')
-	figN.savefig(dirp+'Profiles-NO.pdf')
+	figA.tight_layout() ; figA.savefig(dirp+'Profiles-Axis-A.pdf')
+	figB.tight_layout() ; figB.savefig(dirp+'Profiles-Axis-B.pdf')
+	figT.tight_layout() ; figT.savefig(dirp+'Profiles-T.pdf')
+	figU.tight_layout() ; figU.savefig(dirp+'Profiles-U.pdf')
+	figZ.tight_layout() ; figZ.savefig(dirp+'Profiles-Z.pdf')
+	figC.tight_layout() ; figC.savefig(dirp+'Profiles-CO.pdf')
+	figN.tight_layout() ; figN.savefig(dirp+'Profiles-NO.pdf')
 	print('=> Figure in :'+dirp)
 # else :
 # 	plt.show()
+
+# %%
