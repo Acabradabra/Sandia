@@ -72,7 +72,7 @@ if FLOW :
     Re=1e4
     # Umoy=296 #  0p
     # Umoy=294 # 20p
-    Umoy=256 # 40p
+    Umoy=256   # 40p
     n=20
     Umax=Umoy*(n+2)/n
     # nu=8.411e-6
