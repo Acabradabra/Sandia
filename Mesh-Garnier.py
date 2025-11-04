@@ -12,7 +12,7 @@ if ip is not None:
 #                     Modules
 #===================================================================================
 import Utilities as util
-(Sysa,NSysa,Arg)=util.Parseur(['BD','Flow'],0,'Arg : ')
+(Sysa,NSysa,Arg)=util.Parseur(['BD','Flow'],1,'Arg : case (Garnier,Sevault)')
 (                             [ BD , FLOW ])=Arg
 
 from numpy import *
@@ -26,19 +26,19 @@ import meshio as mo
 import matplotlib.pyplot as plt
 import matplotlib
 
-from ParamsGarnier import *
+case=Sysa[0]
+if   case=='Garnier' : from ParamsGarnier import * ; d_mesh='MESH-GARNIER-Big/' ; name='Sandia-Garnier-Big'
+elif case=='Sevault' : from ParamsSevault import * ; d_mesh='MESH-SEVAULT/'     ; name='Sandia-Sevault'
+else : sys.exit('=> Case not found')
 
 t0=time.time()
 #%%=================================================================================
 #                     Parameters
 #===================================================================================
-
 gdim = 2  # Geometric dimension of the mesh
 
 #=====> files
-d_mesh='MESH-GARNIER-Big/'
 d_plot='PLOT/'
-name='Sandia-Garnier-Big'
 
 #=====> Mesh Size
 h0=1e-4
@@ -66,14 +66,14 @@ N1=10
 #===================================================================================
 #                     Processes
 #===================================================================================
-
 if FLOW : 
 
     Re=1e4
     # Umoy=296 #  0p
     # Umoy=294 # 20p
-    Umoy=256   # 40p
-    n=20
+    # Umoy=256 # 40p
+    Umoy=98.2 # 55p H2
+    n=15
     Umax=Umoy*(n+2)/n
     # nu=8.411e-6
     # U=Re*nu/D0
@@ -89,6 +89,7 @@ if FLOW :
 #%%=================================================================================
 util.Section( 'Geometrie : {:.3f} s'.format(time.time()-t0),1,5,'r' )
 #===================================================================================
+util.MKDIR(d_mesh)
 
 #=====> X dim
 r0=0.5*D0

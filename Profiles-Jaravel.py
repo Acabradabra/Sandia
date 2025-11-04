@@ -25,23 +25,16 @@ t0=time.time()
 #%%=================================================================================
 #                     Parameters
 #===================================================================================
-# Fuel='H2'
-Fuel='CH4'
-if   Fuel=='H2' :
-	from ParamsGarnier import *
-	dirr='/mnt/d/Python/SandiaJaravel/REF-Garnier/'
-	Lines=['l00','l18','l14','l38','l12','l58','l34','l11']
-elif Fuel=='CH4' :
-	from ParamsJaravel import *
-	dirr='/mnt/d/Python/SandiaJaravel/REF-Jaravel/'
-	Lines=['l0','l1','l2','l3','l75','l15','l30']
-	# dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP/DATA/'
-	dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-02-Laera/DUMP/DATA/'
-else :
-	sys.exit('=> Error : Fuel not recognized')
 
-# dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-00-Small/DUMP-04-UCSD-EDC/DATA/'
-# dird='/mnt/d/FLUENT/Sandia-Jaravel/RUN-01-EBM/DUMP-04-ED/DATA/'
+from ParamsJaravel import *
+dirr='/mnt/d/Python/Sandia/REF-Jaravel/'
+Lines=['l0','l1','l2','l3','l75','l15','l30']
+# dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP/DATA/'
+dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-02-Laera/DUMP/DATA/'
+
+# dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-02-Laera/DUMP-07-EDC-NOx-FD39-O/DATA/'
+dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP-03-EDC-BFER-NOx-Turb-Phi1-Tp/DATA/'
+
 dirp=dird+'PLOT/'
 
 D=D0
@@ -79,6 +72,8 @@ figC,axC=plt.subplots(ncols=2,nrows=3,figsize=(20,10)) ; figC.suptitle('Radial C
 figN,axN=plt.subplots(ncols=2,nrows=3,figsize=(20,10)) ; figN.suptitle('Radial NO profiles'              ,fontsize=30)
 axA[0].set_title('Mean mixture fraction',fontsize=30)
 axA[1].set_title('Mean temperature'     ,fontsize=30)
+axB[0].set_title('Carbon monoxide',fontsize=30)
+axB[1].set_title('Nitroux oxide'  ,fontsize=30)
 Col=len(Lines)*['r']
 
 #==========> Read Simulation

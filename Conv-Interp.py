@@ -30,16 +30,18 @@ t0=time.time()
 
 # file_in='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-02-Laera/INIT-Fluent/Interp-00-Fluent.ip'
 # file_in='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-00-COLD/DUMP-02-OD2/DATA/Interp-Cold.ip'
-file_in='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-01-Big/DUMP-02-UCSD-EDC/DATA/Interp-Big-UCSD.ip'
+# file_in='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-01-Big/DUMP-02-UCSD-EDC/DATA/Interp-Big-UCSD.ip'
+file_in='/mnt/d/FLUENT/Sandia-Sevault/RUN-00-COLD/DUMP-05-Side/DATA/Interp-Big-Laera.ip'
 file_ou=file_in[:-3]+'-New.ip'
 
 # Adds=['mix','mix2']
 # Adds=['H2Rad','Ignit']
-Adds=['Ignit']
+# Adds=['Ignit']
+Adds=['Laera','Ignit']
 
 Fuel='H2'
 Tad=2400
-Tu=298
+Tu=300
 T0=300
 
 #%%=================================================================================
@@ -127,6 +129,19 @@ if 'H2Rad' in Adds :
             DSPE_ou[:,n]=data_in.get_data( 'species-'+str(i) )
         else :
             print('=> Species {} not in input file'.format(s))
+elif 'Laera' in Adds :
+    Spe_in=fl.Spe_Laera_l0
+    Spe_ou=fl.Spe_Laera_l1
+    Nspe=[]
+    Ns_in,Ns_ou=len(Spe_in),len(Spe_ou)
+    DSPE_ou=zeros((Np,Ns_ou))
+    for n,s in enumerate(Spe_ou) :
+        Nspe.append( 'species-'+str(n) )
+        if s in Spe_in :
+            i=Spe_in.index(s)
+            DSPE_ou[:,n]=data_in.get_data( 'species-'+str(i) )
+        else :
+            print('=> Species {} not in input file'.format(s))
 else :
     Nspe=[ data_in.variable_names[n] for n in range(Nd,Nv) if 'species' in data_in.variable_names[n] ]
     Ns_in=len(Nspe) ; Ns_ou=Ns_in
@@ -138,7 +153,7 @@ if 'Ignit' in Adds :
     # Yf=data_in.get_data( 'species-'+str(If) ) ; Yf0=min(Yf) ; Yf1=max(Yf)
     # C=1-(Yf-Yf0)/(Yf1-Yf0) ; C=clip(C,0,1)
     T_in=data_in.get_data( 'temperature' )
-    C=(T_in-T0)/(max(T_in)-T0) ; C=clip(C,0,1)
+    C=5*(T_in-T0)/(max(T_in)-T0) ; C=clip(C,0,1)
     Temp=Tu+C*(Tad-Tu)
 
 #===============> Visualisation
@@ -157,29 +172,31 @@ if PLOT :
         [r0,r0 , r0+pm.ep,r0+pm.ep , r1,r1, r1+pm.ep,r1+pm.ep, r2,r2]
     ]
     if 'mix' in Adds or 'mix2' in Adds :
-        fl.Field2(tri,Vel  ,'Vel [m/s]',False,[0,0.5],[0,r2],0,arange(0  ,100,10  ),c_civ,CMask,True,'Plot/Visu-Vel.png'  ,(20,5))
-        fl.Field2(tri,Temp ,'Temp [K]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_inf,CMask,True,'Plot/Visu-Temp.png' ,(20,5))
-        fl.Field2(tri,Y_ch4,'Y_ch4 [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-CH4.png'  ,(20,5))
-        fl.Field2(tri,Y_o2 ,'Y_o2 [-]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-O2.png'   ,(20,5))
-        fl.Field2(tri,Y_n2 ,'Y_n2 [-]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-N2.png'   ,(20,5))
-        fl.Field2(tri,Y_h2 ,'Y_h2 [-]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-H2.png'   ,(20,5))
-        fl.Field2(tri,Yh   ,'Yh [-]'   ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-Yh.png'   ,(20,5))
-        fl.Field2(tri,Yc   ,'Yc [-]'   ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-Yc.png'   ,(20,5))
-        fl.Field2(tri,Yo   ,'Yo [-]'   ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-Yo.png'   ,(20,5))
-        fl.Field2(tri,Ys   ,'Ys [-]'   ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-Ys.png'   ,(20,5))
-        fl.Field2(tri,Yt   ,'Yt [-]'   ,False,[0,0.5],[0,r2],0,arange(0.9,1.1,0.01),c_vir,CMask,True,'Plot/Visu-Yt.png'   ,(20,5))
-        fl.Field2(tri,Mix_f,'Mix_f [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-Mix_f.png',(20,5))
-        fl.Field2(tri,Mix_o,'Mix_o [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-Mix_o.png',(20,5))
-        fl.Field2(tri,Mix_n,'Mix_n [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-Mix_n.png',(20,5))
-        fl.Field2(tri,Mix_s,'Mix_s [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),c_vir,CMask,True,'Plot/Visu-Mix_s.png',(20,5))
+        fl.Field2(tri,Vel  ,'Vel [m/s]',False,[0,0.5],[0,r2],0,arange(0  ,100,10  ),0,c_civ,CMask,True,'Plot/Visu-Vel.png'  ,(20,5))
+        fl.Field2(tri,Temp ,'Temp [K]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_inf,CMask,True,'Plot/Visu-Temp.png' ,(20,5))
+        fl.Field2(tri,Y_ch4,'Y_ch4 [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-CH4.png'  ,(20,5))
+        fl.Field2(tri,Y_o2 ,'Y_o2 [-]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-O2.png'   ,(20,5))
+        fl.Field2(tri,Y_n2 ,'Y_n2 [-]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-N2.png'   ,(20,5))
+        fl.Field2(tri,Y_h2 ,'Y_h2 [-]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-H2.png'   ,(20,5))
+        fl.Field2(tri,Yh   ,'Yh [-]'   ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Yh.png'   ,(20,5))
+        fl.Field2(tri,Yc   ,'Yc [-]'   ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Yc.png'   ,(20,5))
+        fl.Field2(tri,Yo   ,'Yo [-]'   ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Yo.png'   ,(20,5))
+        fl.Field2(tri,Ys   ,'Ys [-]'   ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Ys.png'   ,(20,5))
+        fl.Field2(tri,Yt   ,'Yt [-]'   ,False,[0,0.5],[0,r2],0,arange(0.9,1.1,0.01),0,c_vir,CMask,True,'Plot/Visu-Yt.png'   ,(20,5))
+        fl.Field2(tri,Mix_f,'Mix_f [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Mix_f.png',(20,5))
+        fl.Field2(tri,Mix_o,'Mix_o [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Mix_o.png',(20,5))
+        fl.Field2(tri,Mix_n,'Mix_n [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Mix_n.png',(20,5))
+        fl.Field2(tri,Mix_s,'Mix_s [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Mix_s.png',(20,5))
     if 'mix2' in Adds :
-        fl.Field2(tri,Zf ,'Zf [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),c_vir,CMask,True,'Plot/Visu-Zf.png',(20,5))
-        fl.Field2(tri,Zp ,'Zp [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),c_vir,CMask,True,'Plot/Visu-Zp.png',(20,5))
-        fl.Field2(tri,Zo ,'Zo [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),c_vir,CMask,True,'Plot/Visu-Zo.png',(20,5))
-        # fl.Field2(tri,Zs ,'Zs [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),c_vir,CMask,True,'Plot/Visu-Zs.png',(20,5))
-        fl.Field2(tri,F_f ,'F_f [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),c_vir,CMask,True,'Plot/Visu-F_f.png',(20,5))
-        fl.Field2(tri,F_p ,'F_p [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),c_vir,CMask,True,'Plot/Visu-F_p.png',(20,5))
-        fl.Field2(tri,F_o ,'F_o [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),c_vir,CMask,True,'Plot/Visu-F_o.png',(20,5))
+        fl.Field2(tri,Zf ,'Zf [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-Zf.png',(20,5))
+        fl.Field2(tri,Zp ,'Zp [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-Zp.png',(20,5))
+        fl.Field2(tri,Zo ,'Zo [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-Zo.png',(20,5))
+        # fl.Field2(tri,Zs ,'Zs [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-Zs.png',(20,5))
+        fl.Field2(tri,F_f ,'F_f [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-F_f.png',(20,5))
+        fl.Field2(tri,F_p ,'F_p [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-F_p.png',(20,5))
+        fl.Field2(tri,F_o ,'F_o [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-F_o.png',(20,5))
+    if 'Ignit' in Adds :
+        fl.Field2(tri,Temp ,'Temp [K]' ,False,[0,0.5],[0,r2],0,[],0,c_inf,CMask,True,'Plot/Visu-Temp.png' ,(20,5))
 
 #%%=================================================================================
 util.Section('Writing : {:.3f}'.format(time.time()-t0),1,5,'r')
