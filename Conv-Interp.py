@@ -40,7 +40,9 @@ file_ou=file_in[:-3]+'-New.ip'
 Adds=['Laera','Ignit']
 
 Fuel='H2'
-Tad=2400
+dil=10
+# Tad=2400
+Tad=3000
 Tu=300
 T0=300
 
@@ -153,7 +155,7 @@ if 'Ignit' in Adds :
     # Yf=data_in.get_data( 'species-'+str(If) ) ; Yf0=min(Yf) ; Yf1=max(Yf)
     # C=1-(Yf-Yf0)/(Yf1-Yf0) ; C=clip(C,0,1)
     T_in=data_in.get_data( 'temperature' )
-    C=5*(T_in-T0)/(max(T_in)-T0) ; C=clip(C,0,1)
+    C=dil*(T_in-T0)/(max(T_in)-T0) ; C=clip(C,0,1)
     Temp=Tu+C*(Tad-Tu)
 
 #===============> Visualisation

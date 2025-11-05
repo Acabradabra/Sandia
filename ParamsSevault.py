@@ -14,5 +14,40 @@ Lc=1e-2
 
 ep=D1-D0
 
-#=====> Lines positions
-Pos=[1/8,1/4,3/8,1/2,5/8,3/4,1]
+#====================> Helium content 
+h2=55
+re=15
+
+if   re==15 and h2==55 : flame='a' ; Umoy=98.2
+elif re==15 and h2==45 : flame='b' ; Umoy=84.5
+elif re==15 and h2==37 : flame='c' ; Umoy=75.8
+elif re==12 and h2==55 : flame='d' ; Umoy=78.6
+elif re==18 and h2==55 : flame='e' ; Umoy=117.8
+
+#====================> Directories
+dir0='/mnt/d/Python/Sandia/'
+dirs=dir0+'DATA-Oxy/Mean_RMS/'
+dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP/'
+dird=dirc+'DATA/'
+dirp=dirc+'PLOT/'
+
+Vars_TNF=[
+'CO2'  
+,'O2'   
+,'CO'   
+,'N2'   
+,'CH4'  
+,'H2O'  
+,'H2'   
+,'COLIF'
+,'F560' 
+,'b3'   
+,'Tray' 
+,'Tpg'  
+,'phi'  
+,'xmm'  
+,'shot' 
+,'dens' 
+,'FH'   
+,'FC'
+]

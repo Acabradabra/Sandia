@@ -28,52 +28,17 @@ t0=time.time()
 #%%=================================================================================
 #                     Parameters
 #===================================================================================
-TICKS=True
-# TICKS=False
+cmesh=1e3
 
 #====================> Burner
-# Burner='Pilot'
-Burner='Simple'
-if   Burner=='Simple' :	from ParamsGarnier import *
-elif Burner=='Pilot'  : from ParamsJaravel import *
-else : sys.exit('=> Error : Burner not recognized')
+# Case='Jaravel'
+Case='Garnier'
+# Case='Sevault'
+if   Case=='Jaravel' : from ParamsJaravel import * ; title=''
+elif Case=='Garnier' : from ParamsGarnier import * ; title='he {:.0f} %'.format(he*100)
+elif Case=='Sevault' : from ParamsSevault import * ; title='re {:.0f} k  ,  h2 {:.0f} %'.format(re,h2)
+else : sys.exit('=> Error : Case not recognized')
 
-#====================> Helium content 
-# he='he4'
-he=0.4
-if   he==0   : Ld=180 ; Umoy=296
-elif he==0.2 : Ld=150 ; Umoy=294
-elif he==0.4 : Ld=100 ; Umoy=256
-
-#====================> Directories
-dir0='/mnt/d/Python/Sandia/'
-dirv=dir0+'DATA-H2/ETHZ_H2/%.0fhe/'%(he*100)
-dirs=dir0+'DATA-H2/SANDH2_A/he%.0f/he%.0fstatY/'%(he*10,he*10)
-# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-02-Big-40p/DUMP/'
-# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-02-Big-40p/DUMP-00-He-FD3/'
-dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-02-Big-40p/DUMP-01-He-Uprof2/'
-# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-02-Big-40p/DUMP-04-He-FD39/'
-dird=dirc+'DATA/'
-dirp=dirc+'PLOT/'
-
-#====================> Positions Scattering
-Files_s=os.popen('ls %s/he%.0f*.fav'%(dirs,he*10)).read().splitlines()
-Pos_s=[]
-for f in Files_s :
-	pos0=f.split('/')[-1].split('.')[0]
-	if 'x' in pos0 :
-		pos=pos0.split('x')[1]
-		xl=float(pos[0])/float(pos[1]) ; Pos_s.append(xl)
-		print('=> Position  : x/L_vis={}'.format(xl))
-Npos_s=len(Pos_s)
-IPos_s=argsort(Pos_s)
-
-#====================> Positions Velocimetry
-Files_v=os.popen('ls %s/s*%.0f.dat'%(dirv,he*100)).read().splitlines()
-# Pos_v=[0,1/16,1/8,1/4,3/8,1/2,5/8,3/4,1]
-Pos_v=[0,1,1/2,1/4,1/16,1/8,3/4,3/8,5/8]
-Npos_v=len(Pos_v)
-IPos_v=argsort(Pos_v)
 
 #====================> Fields
 # Vars=['Vel','k','T','mixH','o2','h2','n2','h2o']
@@ -83,17 +48,53 @@ Vars=['Vel','k']
 
 #====================> Velocity profile
 n=15
+
+#%%=================================================================================
+#                     Process
+#===================================================================================
+util.Entete1(104,[dirc,title],'Profiles TNF')
+#===================================================================================
+util.MKDIR(dirp)
+#===================================================================================
+def List_Garnier(dirs,he) :
+	#====================> Positions Scattering
+	Files_s=os.popen('ls %s/he%.0f*.fav'%(dirs,he*10)).read().splitlines()
+	Pos_s=[]
+	for f in Files_s :
+		pos0=f.split('/')[-1].split('.')[0]
+		if 'x' in pos0 :
+			pos=pos0.split('x')[1]
+			xl=float(pos[0])/float(pos[1]) ; Pos_s.append(xl)
+			print('=> Position  : x/L_vis={}'.format(xl))
+	#====================> Positions Velocimetry
+	Files_v=os.popen('ls %s/s*%.0f.dat'%(dirv,he*100)).read().splitlines()
+	# Pos_v=[0,1/16,1/8,1/4,3/8,1/2,5/8,3/4,1]
+	Pos_v=[0,1,1/2,1/4,1/16,1/8,3/4,3/8,5/8]
+	return(Files_s,Pos_s,Files_v,Pos_v)
+#-----------------------------------------------------------------------------------
+def List_Sevault(dirs,f) :
+	#====================> Positions Scattering
+	Files_s=os.popen('ls %s/%s_*_mean_favre.txt'%(dirs,f)).read().splitlines()
+	Pos_s=[]
+	for f in Files_s :
+		pos0=f.split('/')[-1].split('_')[1] ; print(pos0)
+		Pos_s.append( int(pos0) )
+	return(Files_s,Pos_s,[],[])
+#===================================================================================
+util.Section( 'Inlet profile : {:.3f} s'.format(time.time()-t0),0,3,'b' )
+#===================================================================================
 Umax=Umoy*(n+2)/n ; print('=> n = %.0f  ,  Umoy = %.3f [m/s]  ,  Umax = %.3f [m/s]'%(n,Umoy,Umax))
 Np=int(1e4)
 VyV=linspace(0,0.5*D0,Np)
 Uth=Umax*(1-(2*VyV/D0)**n)
-
-#%%=================================================================================
-#                     reading
 #===================================================================================
-util.Entete1(104,[dirc,'he {:.0f} %'.format(he*100)],'Profiles TNF')
+util.Section( 'TNF reading : {:.3f} s'.format(time.time()-t0),0,3,'b' )
 #===================================================================================
-util.MKDIR(dirp)
+if   Case=='Jaravel' : sys.exit('=> Error : Jaravel case not implemented yet')
+elif Case=='Garnier' : (Files_s,Pos_s,Files_v,Pos_v)=List_Garnier(dirs,he)
+elif Case=='Sevault' : (Files_s,Pos_s,Files_v,Pos_v)=List_Sevault(dirs,flame)
+Npos_s=len(Pos_s) ; IPos_s=argsort(Pos_s)
+Npos_v=len(Pos_v) ; IPos_v=argsort(Pos_v)
 #===================================================================================
 if TEMP :
 	util.Section( 'Temporals : {:.3f} s'.format(time.time()-t0),1,5,'r' )
@@ -116,14 +117,14 @@ if VISU :
 	Tiso=list(array([1600,1800])-0)
 
 	F_int={}
-	if 'Vel'  in Vars : F_int['Vel' ]=fl.Visu(dird+'Data-all.dat','velocity-magnitude' ,'Velocity [m/s]'      ,[ 0,0.2],[0,0.04],arange(0,350,50)    ,1e3,[],(25,5),'cividis',dirp+'Visu-Velocity.png'   ,['INTERP','LINES',Vp_v])
-	if 'k'    in Vars : F_int['k'   ]=fl.Visu(dird+'Data-all.dat','turb-kinetic-energy','k [$m^2/s^2$]'       ,[ 0,0.2],[0,0.04],arange(250,2500,250),1e3,[],(25,5),'cividis',dirp+'Visu-TKE.png'        ,['INTERP'])
-	if 'mixH' in Vars : F_int['mixH']=fl.Visu(dird+'Data-all.dat','mixH'               ,'Mixture fraction [-]',[Lc,0.2],[0,0.04],arange(0,1.1,0.1)   ,1e3,[],(25,5),'viridis',dirp+'Visu-Mix.png'        ,['INTERP','MIXH',[fl.Mol_m,BC_f,BC_o]])
-	if 'h2'   in Vars : F_int['h2'  ]=fl.Visu(dird+'Data-all.dat','h2'                 ,'Y H2 [-]'            ,[Lc,0.2],[0,0.04],arange(0,1.1,0.1)   ,1e3,[],(25,5),'viridis',dirp+'Visu-H2.png'         ,['INTERP'])
-	if 'n2'   in Vars : F_int['n2'  ]=fl.Visu(dird+'Data-all.dat','n2'                 ,'Y N2 [-]'            ,[Lc,0.2],[0,0.04],arange(0,1.1,0.1)   ,1e3,[],(25,5),'viridis',dirp+'Visu-N2.png'         ,['INTERP'])
-	if 'o2'   in Vars : F_int['o2'  ]=fl.Visu(dird+'Data-all.dat','o2'                 ,'Y O2 [-]'            ,[Lc,0.4],[0,0.08],arange(0,1.1,0.1)   ,1e3,[],(25,5),'viridis',dirp+'Visu-O2.png'         ,['INTERP'])
-	if 'h2o'  in Vars : F_int['h2o' ]=fl.Visu(dird+'Data-all.dat','h2o'                ,'Y H2O [-]'           ,[Lc,0.4],[0,0.08],arange(0,1.1,0.1)   ,1e3,[],(25,5),'viridis',dirp+'Visu-H2O.png'        ,['INTERP'])
-	if 'T'    in Vars : F_int['T'   ]=fl.Visu(dird+'Data-all.dat','temperature'        ,'Temperature [K]'     ,[Lc,0.4],[0,0.08],arange(250,2500,250),1e3,[],(25,5),'inferno',dirp+'Visu-Temperature.png',['INTERP','LINES',Vp_s,'ISO',Tiso])
+	if 'Vel'  in Vars : F_int['Vel' ]=fl.Visu(dird+'Data-all.dat','velocity-magnitude' ,'Velocity [m/s]'      ,[ 0,0.2],[0,0.04],arange(0,350,50)    ,cmesh,[],(25,5),'cividis',dirp+'Visu-Velocity.png'   ,['INTERP','LINES',Vp_v])
+	if 'k'    in Vars : F_int['k'   ]=fl.Visu(dird+'Data-all.dat','turb-kinetic-energy','k [$m^2/s^2$]'       ,[ 0,0.2],[0,0.04],arange(250,2500,250),cmesh,[],(25,5),'cividis',dirp+'Visu-TKE.png'        ,['INTERP'])
+	if 'mixH' in Vars : F_int['mixH']=fl.Visu(dird+'Data-all.dat','mixH'               ,'Mixture fraction [-]',[Lc,0.2],[0,0.04],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-Mix.png'        ,['INTERP','MIXH',[fl.Mol_m,BC_f,BC_o]])
+	if 'h2'   in Vars : F_int['h2'  ]=fl.Visu(dird+'Data-all.dat','h2'                 ,'Y H2 [-]'            ,[Lc,0.2],[0,0.04],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-H2.png'         ,['INTERP'])
+	if 'n2'   in Vars : F_int['n2'  ]=fl.Visu(dird+'Data-all.dat','n2'                 ,'Y N2 [-]'            ,[Lc,0.2],[0,0.04],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-N2.png'         ,['INTERP'])
+	if 'o2'   in Vars : F_int['o2'  ]=fl.Visu(dird+'Data-all.dat','o2'                 ,'Y O2 [-]'            ,[Lc,0.4],[0,0.08],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-O2.png'         ,['INTERP'])
+	if 'h2o'  in Vars : F_int['h2o' ]=fl.Visu(dird+'Data-all.dat','h2o'                ,'Y H2O [-]'           ,[Lc,0.4],[0,0.08],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-H2O.png'        ,['INTERP'])
+	if 'T'    in Vars : F_int['T'   ]=fl.Visu(dird+'Data-all.dat','temperature'        ,'Temperature [K]'     ,[Lc,0.4],[0,0.08],arange(250,2500,250),cmesh,[],(25,5),'inferno',dirp+'Visu-Temperature.png',['INTERP','LINES',Vp_s,'ISO',Tiso])
 
 	D_int={}
 	Vy=linspace(0,0.5*D2,Np)
@@ -163,20 +164,12 @@ if VISU :
 #%%=================================================================================
 #                     reading
 #===================================================================================
-def ReadTNF(name) :
-	sep=' ' ; skip=3
+def ReadTNF(name,Params) :
+	sep,skip,i0=Params[:3]
 	with open(name) as file :
 		Lines=file.readlines()
-		T=[ s.strip() for s in Lines[skip][:-1].split(sep) if s ]
-		M=array([ [float(v) for v in L.split(sep) if v ] for L in Lines[skip+1:] ])
-	file.closed
-	return({ s:M[:,i] for i,s in enumerate(T) })
-#===================================================================================
-def ReadLDV(name) :
-	sep='\t' ; skip=11
-	with open(name) as file :
-		Lines=file.readlines()
-		T=[ s.strip() for s in Lines[skip][2:-1].split(sep) if s ]
+		if i0>=0 : T=[ s.strip() for s in Lines[skip][i0:-1].split(sep) if s ]
+		else     : T=Params[3]
 		M=array([ [float(v) for v in L.split(sep) if v ] for L in Lines[skip+1:] ])
 	file.closed
 	return({ s:M[:,i] for i,s in enumerate(T) })
@@ -201,27 +194,29 @@ if Npos_s%nc>0 :
 	if 'n2'   in Vars : axN[-1,-1].axis('off')
 	if 'h2o'  in Vars : axP[-1,-1].axis('off')
 
-#=====> Velocity profiles
-Rlims=[3,8,10,20,20,20,40,40,40]
-Pv=[ '0','1/16','1/8','1/4','3/8','1/2','5/8','3/4','1' ]
-for n,p in enumerate(IPos_v) :
-	i= n//3
-	j= n-3*i
-	Data=ReadLDV(Files_v[p])
-	Vel=hypot( Data['u'] , Data['v'] )
-	Tke=hypot( Data['varu'] , Data['varv'] )
-	if 'Vel' in Vars : axV[i,j].plot( Vy*1e3,D_int['Vel' ][p],'r' ) ; axV[i,j].plot( Data['y'],Vel,'ok' ) ; axV[i,j].set_title('x/L_vis='+Pv[n],fontsize=20) ; axV[i,j].ticklabel_format(style='sci',axis='y',scilimits=(-2,4)) ; axV[i,j].set_xlim((0,Rlims[n]))
-	if 'k'   in Vars : axK[i,j].plot( Vy*1e3,D_int['k'   ][p],'r' ) ; axK[i,j].plot( Data['y'],Tke,'ok' ) ; axK[i,j].set_title('x/L_vis='+Pv[n],fontsize=20) ; axK[i,j].ticklabel_format(style='sci',axis='y',scilimits=(-2,4)) ; axK[i,j].set_xlim((0,Rlims[n]))
-	if i==2 : 
-		if 'Vel' in Vars : axV[i,j].set_xlabel('r [mm]',fontsize=20)
-		if 'k'   in Vars : axK[i,j].set_xlabel('r [mm]',fontsize=20)
-if 'Vel' in Vars : axV[0,0].plot( [0,Rlims[0]],2*[Umoy],':k' )
+if Case=='Garnier' :
+	#=====> Velocity profiles
+	for n,p in enumerate(IPos_v) :
+		i= n//3
+		j= n-3*i
+		# Data=ReadLDV(Files_v[p])
+		Data=ReadTNF(Files_v[p],('\t',11,2))
+		Vel=hypot( Data['u'] , Data['v'] )
+		Tke=hypot( Data['varu'] , Data['varv'] )
+		if 'Vel' in Vars : axV[i,j].plot( Vy*1e3,D_int['Vel' ][p],'r' ) ; axV[i,j].plot( Data['y'],Vel,'ok' ) ; axV[i,j].set_title('x/L_vis='+Pv[n],fontsize=20) ; axV[i,j].ticklabel_format(style='sci',axis='y',scilimits=(-2,4)) ; axV[i,j].set_xlim((0,Rlims[n]))
+		if 'k'   in Vars : axK[i,j].plot( Vy*1e3,D_int['k'   ][p],'r' ) ; axK[i,j].plot( Data['y'],Tke,'ok' ) ; axK[i,j].set_title('x/L_vis='+Pv[n],fontsize=20) ; axK[i,j].ticklabel_format(style='sci',axis='y',scilimits=(-2,4)) ; axK[i,j].set_xlim((0,Rlims[n]))
+		if i==2 : 
+			if 'Vel' in Vars : axV[i,j].set_xlabel('r [mm]',fontsize=20)
+			if 'k'   in Vars : axK[i,j].set_xlabel('r [mm]',fontsize=20)
+	if 'Vel' in Vars : axV[0,0].plot( [0,Rlims[0]],2*[Umoy],':k' )
 
+if   Case=='Garnier' : Params=(' ',3, 0 )
+elif Case=='Sevault' : Params=('\t',0,-1,Vars_TNF)
 #=====> Scattering
 for n,p in enumerate(IPos_s) :
 	i= n//nc
 	j= n-nc*i
-	Data=ReadTNF(Files_s[p])
+	Data=ReadTNF(Files_s[p],Params)
 	if 'T'    in Vars : axT[i,j].plot(Vy*1e3,D_int['T'   ][p],'r') ; axT[i,j].errorbar(Data['r(mm)'],Data['T(K)' ],yerr=0.03*Data['T(K)' ],ecolor='k',color='k') ; axT[i,j].set_title('x/L_vis=%.2f'%(Pos_s[p]),fontsize=20) ; axT[i,j].ticklabel_format(style='sci',axis='y',scilimits=(-2,4))
 	if 'mixH' in Vars : axZ[i,j].plot(Vy*1e3,D_int['mixH'][p],'r') ; axZ[i,j].errorbar(Data['r(mm)'],Data['Fblgr'],yerr=0.04*Data['Fblgr'],ecolor='k',color='k') ; axZ[i,j].set_title('x/L_vis=%.2f'%(Pos_s[p]),fontsize=20) ; axZ[i,j].ticklabel_format(style='sci',axis='y',scilimits=(-2,4))
 	if 'o2'   in Vars : axO[i,j].plot(Vy*1e3,D_int['o2'  ][p],'r') ; axO[i,j].errorbar(Data['r(mm)'],Data['YO2'  ],yerr=0.04*Data['YO2'  ],ecolor='k',color='k') ; axO[i,j].set_title('x/L_vis=%.2f'%(Pos_s[p]),fontsize=20) ; axO[i,j].ticklabel_format(style='sci',axis='y',scilimits=(-2,4))

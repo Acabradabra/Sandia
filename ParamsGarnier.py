@@ -19,3 +19,25 @@ ep=D1-D0
 
 #=====> Lines positions
 Pos=[1/8,1/4,3/8,1/2,5/8,3/4,1]
+
+#====================> Helium content 
+# he='he4'
+he=0.4
+if   he==0   : Ld=180 ; Umoy=296
+elif he==0.2 : Ld=150 ; Umoy=294
+elif he==0.4 : Ld=100 ; Umoy=256
+
+#====================> Directories
+dir0='/mnt/d/Python/Sandia/'
+dirv=dir0+'DATA-H2/ETHZ_H2/%.0fhe/'%(he*100)
+dirs=dir0+'DATA-H2/SANDH2_A/he%.0f/he%.0fstatY/'%(he*10,he*10)
+# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-02-Big-40p/DUMP/'
+# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-02-Big-40p/DUMP-00-He-FD3/'
+dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-02-Big-40p/DUMP-01-He-Uprof2/'
+# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-02-Big-40p/DUMP-04-He-FD39/'
+dird=dirc+'DATA/'
+dirp=dirc+'PLOT/'
+
+#====================> Velocity plots
+Rlims=[3,8,10,20,20,20,40,40,40]
+Pv=[ '0','1/16','1/8','1/4','3/8','1/2','5/8','3/4','1' ]
