@@ -27,27 +27,75 @@ elif re==18 and h2==55 : flame='e' ; Umoy=117.8
 #====================> Directories
 dir0='/mnt/d/Python/Sandia/'
 dirs=dir0+'DATA-Oxy/Mean_RMS/'
+# dirc='/mnt/d/FLUENT/Sandia-Sevault/RUN-00-COLD/DUMP-05-Side/'
+# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-03-Tw1400/'
 dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP/'
 dird=dirc+'DATA/'
 dirp=dirc+'PLOT/'
+# slice='Data-all.dat'
+slice='Data-33.dat'
 
-Vars_TNF=[
-'CO2'  
-,'O2'   
-,'CO'   
-,'N2'   
-,'CH4'  
-,'H2O'  
-,'H2'   
-,'COLIF'
-,'F560' 
-,'b3'   
-,'Tray' 
-,'Tpg'  
-,'phi'  
-,'xmm'  
-,'shot' 
-,'dens' 
-,'FH'   
-,'FC'
+D_compa=[
+'PLOT-DF30',
+'PLOT-DF31',
+'PLOT-DF32'
 ]
+
+#====================> Variables
+Vars_TNF=[
+'CO2'  ,
+'O2'   ,
+'CO'   ,
+'N2'   ,
+'CH4'  ,
+'H2O'  ,
+'H2'   ,
+'COLIF',
+'F560' ,
+'b3'   ,
+'Tray' ,
+'Tpg'  ,
+'phi'  ,
+'xmm'  ,
+'shot' ,
+'dens' ,
+'FH'   ,
+'FC'
+]
+
+#====================> Correspondences TNF variables
+Cor={
+# 'r'   :'xmm'  ,
+'r'   :'shot'  ,
+'T'   :'Tray' ,
+'Tpg' :'Tpg'  ,
+'Rho' :'dens' ,
+'mix' :'phi'  ,
+'mixH':'FH'   ,
+'mixC':'FC'   ,
+'o2'  :'O2'   ,
+'h2'  :'H2'   ,
+'n2'  :'N2'   ,
+'co'  :'CO'   ,
+'ch4' :'CH4'  ,
+'h2o' :'H2O'  ,
+'co2' :'CO2'
+}
+
+#====================> Uncertainties
+Err={
+'r'   :0 ,
+'T'   :0.02 ,
+'Tpg' :0.02 ,
+'Rho' :0 ,
+'mix' :0 ,
+'mixH':0 ,
+'mixC':0 ,
+'o2'  :0 ,
+'h2'  :0.08 ,
+'n2'  :0.02 ,
+'co'  :0.08 ,
+'ch4' :0 ,
+'h2o' :0 ,
+'co2' :0
+}
