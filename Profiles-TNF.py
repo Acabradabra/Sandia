@@ -12,9 +12,10 @@ if ip is not None:
 #                     Modules
 #===================================================================================
 import Utilities as util
-(Sysa,NSysa,Arg)=util.Parseur(['Save','Visu','Temp','Data','Over','Vel','Only','Compa','All'],1,'Arg : Case (Jaravel,Garnier,Sevault)')
-(                             [ SAVE , VISU , TEMP , DATA , OVER , VEL , ONLY , COMPA , ALL ])=Arg
+(Sysa,NSysa,Arg)=util.Parseur(['Save','Visu','Temp','Data','Over','Vel','Only','Compa','TProf','All'],1,'Arg : Case (Jaravel,Garnier,Sevault)')
+(                             [ SAVE , VISU , TEMP , DATA , OVER , VEL , ONLY , COMPA , TPROF , ALL ])=Arg
 if ALL : SAVE,VISU,TEMP,OVER,DATA=True,True,True,True,True
+if VEL : VISU,SAVE=True,True
 
 from numpy import *
 import os
@@ -41,9 +42,9 @@ elif Case=='Sevault' : from ParamsSevault import * ; title='re {:.0f} k  ,  h2 {
 else : sys.exit('=> Error : Case not recognized')
 
 #====================> Fields
-# Vars=['Vel','k','T','o2','h2','ch4','co2','co']
+Vars=['Vel','k','T','o2','h2','ch4','co2','co']
 # Vars=['Vel','k','T','mixH','o2','h2','n2','h2o']
-Vars=['T','o2','h2','ch4','co2','co']
+# Vars=['T','o2','h2','ch4','co2','co']
 # Vars=['Vel','k']
 # Vars=['Vel']
 # Vars=['T']
@@ -111,6 +112,20 @@ if TEMP :
 	fig_b.tight_layout()
 	fig_b.savefig(dirp+'Balance.pdf')
 	if ONLY : sys.exit('=> Stop after temporals')
+#%%=================================================================================
+if TPROF :
+	h=16.5
+	l=16.2
+	T0=300
+	T1=400
+	L=1e-2
+	om=sqrt(h/l)
+	Xw=linspace(0,L,int(1e3))
+	Tw=T0+(T1-T0)*exp( (Xw-L)*om ) ; print('=> Tw0 : %.2f'%(Tw[0]))
+	figw,axw=plt.subplots()
+	axw.plot(Xw,Tw,'k')
+	util.SaveFig(figw,dirp+'TProf_Wall.pdf')
+	if ONLY : sys.exit('=> Stop after wall profile')
 #%%=================================================================================
 if VISU :
 	util.Section( 'Visualisation : {:.3f} s'.format(time.time()-t0),1,5,'r' )
@@ -197,7 +212,9 @@ def PlotFile(ax,dir0,var,nc) :
 		j= n-nc*i
 		ax[i,j].plot(Rad,D[k],label=dir0.split('/')[-2])
 	# ax[i,j].legend(bbox_to_anchor=ax[-1,-1].bbox)
-	ax[i,j].legend(loc='center left',bbox_to_anchor=(1,0.5))
+	# ax[i,j].legend(loc='center left',bbox_to_anchor=(1,0.5))
+	ax[-1,-1].plot(1,1,'.',label=dir0.split('/')[-2])
+	ax[-1,-1].legend(loc='center',bbox_to_anchor=(0.5,0.5))
 #=====================================================================================
 def Profile(ax,Vy,D_int,Data,Cor,Err,p,var,tpos,xlim) :
 	if len(Vy)>0 : grid=Vy*1e3
@@ -220,7 +237,7 @@ if 'co'   in Vars : figA,axA=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; f
 if 'h2o'  in Vars : figP,axP=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; figP.suptitle('Y H2O [-]'           ,fontsize=30)
 if 'co2'  in Vars : figC,axC=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; figC.suptitle('Y CO2 [-]'           ,fontsize=30)
 if 'ch4'  in Vars : figM,axM=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; figM.suptitle('Y CH4 [-]'           ,fontsize=30)
-if Npos_s%nc>0 : # and not COMPA :
+if Npos_s%nc>0 : #and not COMPA :
 	if 'T'    in Vars : axT[-1,-1].axis('off')
 	if 'mixH' in Vars : axZ[-1,-1].axis('off')
 	if 'o2'   in Vars : axO[-1,-1].axis('off')
@@ -276,6 +293,7 @@ for n,p in enumerate(IPos_s) :
 		if 'ch4'  in Vars : axM[i,j].set_xlabel('r [mm]',fontsize=20)
 
 if COMPA :
+	D_compa=[ d for d in os.listdir(dirc) if d[:5]=='PLOT-' ]
 	for d in D_compa :
 		dc=dirc+d+'/'
 		if 'T'    in Vars : PlotFile(axT,dc,'T'   ,nc)

@@ -29,17 +29,24 @@ dir0='/mnt/d/Python/Sandia/'
 dirs=dir0+'DATA-Oxy/Mean_RMS/'
 # dirc='/mnt/d/FLUENT/Sandia-Sevault/RUN-00-COLD/DUMP-05-Side/'
 # dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-03-Tw1400/'
+# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-04-DF3/'
+# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-05-DF4/'
+# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-05-Tw400-Cmix/'
 dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP/'
 dird=dirc+'DATA/'
 dirp=dirc+'PLOT/'
 # slice='Data-all.dat'
-slice='Data-33.dat'
+par='Um110'
+slice='Data-%s.dat'%(par)
+dirp=dirc+'PLOT-%s/'%(par)
 
-D_compa=[
-'PLOT-DF30',
-'PLOT-DF31',
-'PLOT-DF32'
-]
+# D_compa=[
+# 'PLOT-Cmix',
+# 'PLOT-DF30',
+# 'PLOT-DF31',
+# 'PLOT-DF32',
+# 'PLOT-DF33'
+# ]
 
 #====================> Variables
 Vars_TNF=[
