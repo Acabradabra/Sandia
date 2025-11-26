@@ -140,7 +140,7 @@ elif 'Laera' in Adds :
         else :
             print('=> Species {} not in input file'.format(s))
 else :
-    Nspe=[ data_in.variable_names[n] for n in range(Nd,Nv) if 'species' in data_in.variable_names[n] ]
+    Nspe=[ data_in.variable_names[n] for n in range(Nd,Nv+Nd) if 'species' in data_in.variable_names[n] ] ; print('=> Species : ',Nspe)
     Ns_in=len(Nspe) ; Ns_ou=Ns_in
     DSPE_ou=zeros((Np,Ns_in))
     for n,s in enumerate(Nspe) : 
@@ -201,7 +201,6 @@ if PLOT :
     if 'Ignit' in Adds :
         fl.Field2(tri,Temp ,'Temp [K]' ,False,[0,0.5],[0,r2],0,[],0,c_inf,CMask,True,'Plot/Visu-Temp.png' ,(20,5))
 
-if not OUT : sys.exit('=> End of processing')
 #%%=================================================================================
 util.Section('Writing : {:.3f}'.format(time.time()-t0),1,5,'r')
 #===================================================================================
@@ -212,16 +211,17 @@ if    'mix'  in Adds : Fields_ou+=['fmean']
 if    'mix2' in Adds : Fields_ou+=['fmean2']
 if not 'mix' in Adds : Fields_ou+=Nspe
 Nv_ou=len(Fields_ou) ; Nv0=Nd+Nv-Ns_in
+print('=> Fields out : ',Fields_ou)
 
 DATA_ou=zeros((Np,Nd+Nv_ou))
 for n,v in enumerate(data_in.variable_names[:-Ns_in]) : 
     DATA_ou[:,n]=data_in.get_data(v)
-# DATA_ou[:,Nv0:Nv0+Ns_ou]=DSPE_ou
-if   'mix'  in Adds : DATA_ou[:,Nv0+Ns_ou ]= Mix_f  #; Fields_ou=data_in.variable_names[Nd:]+['fmean']
-elif 'mix2' in Adds : DATA_ou[:,Nv0+Ns_ou:]=[Yf,Yp] #; Fields_ou=data_in.variable_names[Nd:]+['fmean','fmean2']
+if   'mix'  in Adds : DATA_ou[:,Nv0 ]= Mix_f 
+elif 'mix2' in Adds : DATA_ou[:,Nv0:]=[Yf,Yp]
 else                : DATA_ou[:,Nv0:Nv0+Ns_ou]=DSPE_ou
 if 'Ignit'  in Adds : DATA_ou[:,Nd+Fields_ou.index('temperature')]=Temp 
 
+if not OUT : sys.exit('=> End of processing')
 fou=open(file_ou,'w')
 fou.write( '3\n' )
 fou.write( '{}\n'.format(Nd) )

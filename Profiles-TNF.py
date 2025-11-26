@@ -40,6 +40,7 @@ elif Case=='Sevault' : from ParamsSevault import * ; title='re {:.0f} k  ,  h2 {
 else : sys.exit('=> Error : Case not recognized')
 
 #====================> Fields
+Vars=['Vel','k','T','mix']
 # Vars=['Vel','k','T','o2','h2','ch4','co2','co']
 # Vars=['Vel','k','T','mixH','o2','h2','n2','h2o']
 # Vars=['T','o2','h2','ch4','co2','co']
@@ -47,7 +48,7 @@ else : sys.exit('=> Error : Case not recognized')
 # Vars=['Vel','k','tt']
 # Vars=['Vel','k']
 # Vars=['Vel']
-Vars=['T']
+# Vars=['T']
 
 #====================> Visu domain
 if ZOOM :
@@ -140,6 +141,18 @@ if TPROF :
 	util.SaveFig(figw,dirp+'TProf_Wall.pdf')
 	if ONLY : sys.exit('=> Stop after wall profile')
 #%%=================================================================================
+if STRUCT :
+	alp=BC_f['CH4']/BC_f['H2']
+	XH2_s =1/(1.5+3*alp)
+	XCH4_s=       alp *XH2_s
+	XO2_s =(0.5+2*alp)*XH2_s
+	Mav_s=fl.Mol_m['H2']*XH2_s+fl.Mol_m['O2']*XO2_s+fl.Mol_m['CH4']*XCH4_s
+	YH_s=fl.Mol_m['H']*(4*XCH4_s+2*XH2_s)/Mav_s
+	YH_o=fl.Yh(BC_o,fl.Mol_m)
+	YH_f=fl.Yh(BC_f,fl.Mol_m)
+	Zst=(YH_s-YH_o)/(YH_f-YH_o) ; print('=> Stoichiometric mixture fraction Zst = %.3f'%(Zst))
+	if ONLY : sys.exit('=> Stop after mixture fraction')
+#%%=================================================================================
 if VISU :
 	util.Section( 'Visualisation : {:.3f} s'.format(time.time()-t0),1,5,'r' )
 	if Case=='Garnier' :
@@ -158,6 +171,7 @@ if VISU :
 	if 'k'    in Vars : F_int['k'   ]=fl.Visu(dird+slice,'turb-kinetic-energy','k [$m^2/s^2$]'       ,RX_d,RY_d,arange(250,2500,250),cmesh,[],(25,5),'cividis',dirp+'Visu-TKE.png'        ,['INTERP'])
 	if 'tt'   in Vars : F_int['tt'  ]=fl.Visu(dird+slice,'tt'                 ,'tt [s]'              ,RX_d,RY_d,arange(0,1e-3,1e-4) ,cmesh,[],(25,5),'cividis',dirp+'Visu-tt.png'         ,['INTERP'])
 	if 'mixH' in Vars : F_int['mixH']=fl.Visu(dird+slice,'mixH'               ,'Mixture fraction [-]',RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-Mix.png'        ,['INTERP','MIXH',[fl.Mol_m,BC_f,BC_o]])
+	if 'mix'  in Vars : F_int['mix' ]=fl.Visu(dird+slice,'fmean'              ,'Mixture fraction [-]',RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-Fmean.png'      ,['INTERP'])
 	if 'h2'   in Vars : F_int['h2'  ]=fl.Visu(dird+slice,'h2'                 ,'Y H2 [-]'            ,RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-H2.png'         ,['INTERP'])
 	if 'n2'   in Vars : F_int['n2'  ]=fl.Visu(dird+slice,'n2'                 ,'Y N2 [-]'            ,RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-N2.png'         ,['INTERP'])
 	if 'o2'   in Vars : F_int['o2'  ]=fl.Visu(dird+slice,'o2'                 ,'Y O2 [-]'            ,RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-O2.png'         ,['INTERP'])
