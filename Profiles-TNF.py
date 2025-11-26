@@ -12,10 +12,11 @@ if ip is not None:
 #                     Modules
 #===================================================================================
 import Utilities as util
-(Sysa,NSysa,Arg)=util.Parseur(['Save','Visu','Temp','Data','Over','Vel','Only','Compa','TProf','All'],1,'Arg : Case (Jaravel,Garnier,Sevault)')
-(                             [ SAVE , VISU , TEMP , DATA , OVER , VEL , ONLY , COMPA , TPROF , ALL ])=Arg
-if ALL : SAVE,VISU,TEMP,OVER,DATA=True,True,True,True,True
+(Sysa,NSysa,Arg)=util.Parseur(['Save','Visu','Temp','Data','Over','Vel','Only','Compa','TProf','Zoom','Struct','All'],1,'Arg : Case (Jaravel,Garnier,Sevault)')
+(                             [ SAVE , VISU , TEMP , DATA , OVER , VEL , ONLY , COMPA , TPROF , ZOOM , STRUCT , ALL ])=Arg
+if ALL : SAVE,VISU,TEMP,OVER,DATA=True,True,True,True,True # Over : Overwrite
 if VEL : VISU,SAVE=True,True
+if COMPA : SAVE,DATA=True,True
 
 from numpy import *
 import os
@@ -42,12 +43,26 @@ elif Case=='Sevault' : from ParamsSevault import * ; title='re {:.0f} k  ,  h2 {
 else : sys.exit('=> Error : Case not recognized')
 
 #====================> Fields
-Vars=['Vel','k','T','o2','h2','ch4','co2','co']
+# Vars=['Vel','k','T','o2','h2','ch4','co2','co']
 # Vars=['Vel','k','T','mixH','o2','h2','n2','h2o']
 # Vars=['T','o2','h2','ch4','co2','co']
+# Vars=['Vel','T','o2','h2']
+# Vars=['Vel','k','tt']
 # Vars=['Vel','k']
 # Vars=['Vel']
-# Vars=['T']
+Vars=['T']
+
+#====================> Visu domain
+if ZOOM :
+	RY_t=[ 0,0.010]
+	RX_t=[ 0,0.025]
+	RY_d=[ 0,0.010]
+	RX_d=[ 0,0.025]
+else :
+	RY_t=[ 0,0.10]
+	RX_t=[Lc,0.50]
+	RY_d=[ 0,0.04]
+	RX_d=[ 0,0.2 ]
 
 #====================> Velocity profile
 n=15
@@ -100,6 +115,7 @@ Npos_s=len(Pos_s) ; IPos_s=argsort(Pos_s)
 Npos_v=len(Pos_v) ; IPos_v=argsort(Pos_v)
 #===================================================================================
 if TEMP :
+	# dirp=dirc+'PLOT/'
 	util.Section( 'Temporals : {:.3f} s'.format(time.time()-t0),1,5,'r' )
 	fl.Probe_plot(dirc+'probe-F.out',dirp+'Probe-F.pdf')
 	fl.Probe_plot(dirc+'probe-T.out',dirp+'Probe-T.pdf')
@@ -136,19 +152,22 @@ if VISU :
 		Vp_v=[ Lc+z*1e-3       for z in Pos_s ]
 		Vp_s=[ Lc+z*1e-3       for z in Pos_s ]
 	Tiso=list(array([1600,1800])-0)
+	if STRUCT : ParT=['MIX',[fl.Mol_m,BC_f,BC_o]]
+	else      : ParT=[]
 
 	F_int={}
-	if 'T'    in Vars : F_int['T'   ]=fl.Visu(dird+slice,'temperature'        ,'Temperature [K]'     ,[Lc,0.4],[0,0.08],arange(250,2500,250),cmesh,[],(25,5),'inferno',dirp+'Visu-Temperature.png',['INTERP','LINES',Vp_s,'ISO',Tiso])
-	if 'Vel'  in Vars : F_int['Vel' ]=fl.Visu(dird+slice,'velocity-magnitude' ,'Velocity [m/s]'      ,[ 0,0.2],[0,0.04],arange(0,350,50)    ,cmesh,[],(25,5),'cividis',dirp+'Visu-Velocity.png'   ,['INTERP','LINES',Vp_v])
-	if 'k'    in Vars : F_int['k'   ]=fl.Visu(dird+slice,'turb-kinetic-energy','k [$m^2/s^2$]'       ,[ 0,0.2],[0,0.04],arange(250,2500,250),cmesh,[],(25,5),'cividis',dirp+'Visu-TKE.png'        ,['INTERP'])
-	if 'mixH' in Vars : F_int['mixH']=fl.Visu(dird+slice,'mixH'               ,'Mixture fraction [-]',[Lc,0.2],[0,0.04],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-Mix.png'        ,['INTERP','MIXH',[fl.Mol_m,BC_f,BC_o]])
-	if 'h2'   in Vars : F_int['h2'  ]=fl.Visu(dird+slice,'h2'                 ,'Y H2 [-]'            ,[Lc,0.2],[0,0.04],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-H2.png'         ,['INTERP'])
-	if 'n2'   in Vars : F_int['n2'  ]=fl.Visu(dird+slice,'n2'                 ,'Y N2 [-]'            ,[Lc,0.2],[0,0.04],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-N2.png'         ,['INTERP'])
-	if 'o2'   in Vars : F_int['o2'  ]=fl.Visu(dird+slice,'o2'                 ,'Y O2 [-]'            ,[Lc,0.4],[0,0.08],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-O2.png'         ,['INTERP'])
-	if 'co'   in Vars : F_int['co'  ]=fl.Visu(dird+slice,'co'                 ,'Y CO [-]'            ,[Lc,0.4],[0,0.08],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-CO.png'         ,['INTERP'])
-	if 'ch4'  in Vars : F_int['ch4' ]=fl.Visu(dird+slice,'ch4'                ,'Y CH4 [-]'           ,[Lc,0.4],[0,0.08],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-CH4.png'        ,['INTERP'])
-	if 'h2o'  in Vars : F_int['h2o' ]=fl.Visu(dird+slice,'h2o'                ,'Y H2O [-]'           ,[Lc,0.4],[0,0.08],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-H2O.png'        ,['INTERP'])
-	if 'co2'  in Vars : F_int['co2' ]=fl.Visu(dird+slice,'co2'                ,'Y CO2 [-]'           ,[Lc,0.4],[0,0.08],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-CO2.png'        ,['INTERP'])
+	if 'T'    in Vars : F_int['T'   ]=fl.Visu(dird+slice,'temperature'        ,'Temperature [K]'     ,RX_t,RY_t,arange(250,2500,250),cmesh,[],(25,5),'inferno',dirp+'Visu-Temperature.png',['INTERP','LINES',Vp_s,'ISO',Tiso,'RECIRC','b']+ParT)
+	if 'Vel'  in Vars : F_int['Vel' ]=fl.Visu(dird+slice,'velocity-magnitude' ,'Velocity [m/s]'      ,RX_d,RY_d,arange(0,350,50)    ,cmesh,[],(25,5),'cividis',dirp+'Visu-Velocity.png'   ,['INTERP','LINES',Vp_v])
+	if 'k'    in Vars : F_int['k'   ]=fl.Visu(dird+slice,'turb-kinetic-energy','k [$m^2/s^2$]'       ,RX_d,RY_d,arange(250,2500,250),cmesh,[],(25,5),'cividis',dirp+'Visu-TKE.png'        ,['INTERP'])
+	if 'tt'   in Vars : F_int['tt'  ]=fl.Visu(dird+slice,'tt'                 ,'tt [s]'              ,RX_d,RY_d,arange(0,1e-3,1e-4) ,cmesh,[],(25,5),'cividis',dirp+'Visu-tt.png'         ,['INTERP'])
+	if 'mixH' in Vars : F_int['mixH']=fl.Visu(dird+slice,'mixH'               ,'Mixture fraction [-]',RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-Mix.png'        ,['INTERP','MIXH',[fl.Mol_m,BC_f,BC_o]])
+	if 'h2'   in Vars : F_int['h2'  ]=fl.Visu(dird+slice,'h2'                 ,'Y H2 [-]'            ,RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-H2.png'         ,['INTERP'])
+	if 'n2'   in Vars : F_int['n2'  ]=fl.Visu(dird+slice,'n2'                 ,'Y N2 [-]'            ,RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-N2.png'         ,['INTERP'])
+	if 'o2'   in Vars : F_int['o2'  ]=fl.Visu(dird+slice,'o2'                 ,'Y O2 [-]'            ,RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-O2.png'         ,['INTERP'])
+	if 'co'   in Vars : F_int['co'  ]=fl.Visu(dird+slice,'co'                 ,'Y CO [-]'            ,RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-CO.png'         ,['INTERP'])
+	if 'ch4'  in Vars : F_int['ch4' ]=fl.Visu(dird+slice,'ch4'                ,'Y CH4 [-]'           ,RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-CH4.png'        ,['INTERP'])
+	if 'h2o'  in Vars : F_int['h2o' ]=fl.Visu(dird+slice,'h2o'                ,'Y H2O [-]'           ,RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-H2O.png'        ,['INTERP'])
+	if 'co2'  in Vars : F_int['co2' ]=fl.Visu(dird+slice,'co2'                ,'Y CO2 [-]'           ,RX_t,RY_t,arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-CO2.png'        ,['INTERP'])
 
 	D_int={}
 	Vy=linspace(0,0.5*D2,Np)
@@ -167,24 +186,41 @@ if VISU :
 					writer=csv.writer(file)
 					writer.writerow( ['r(mm)'] + [ 'x/L_vis=%.2f'%(p) for p in Pos_s ] )
 					writer.writerows( [ [ Vy[i]*1e3 ] + [ D_int[v][j][i] for j in IPos_s ] for i in range(Np) ] )
+				file.closed
 
-	if VEL and 'Vel' in Vars :
+	if VEL and 'Vel' in Vars and 'k' in Vars :
 		util.Section( 'Velocity profiles : {:.3f} s'.format(time.time()-t0),1,5,'r' )
-		PosV=array([0,0.1,0.5,0.9,1])*Lc
+		PosV=array([0.01,0.1,0.5,0.9,1])*Lc
+		# PosV=array([0])*Lc
 		figVp,axVp=plt.subplots(figsize=(10,7)) ; figVp.suptitle('Velocity profiles'       ,fontsize=30)
 		figKp,axKp=plt.subplots(figsize=(10,7)) ; figKp.suptitle('Turbulent kinetic energy',fontsize=30)
 		axVp.set_xlabel('r [mm]'      ,fontsize=30) ; axKp.set_xlabel('r [mm]'       ,fontsize=30)
 		axVp.set_ylabel('V [m/s]'     ,fontsize=30) ; axKp.set_ylabel('k [$m^2/s^2$]',fontsize=30)
-		for p in PosV :
-			Vprof=F_int['Vel'](Np*[p],VyV)
-			Kprof=F_int['k'  ](Np*[p],VyV)
+		print( '=> Poiseuil  ,  Max V=%.3f [m/s]  ,  Mean V=%.3f [m/s]'%(max(Uth),fl.Umoy(VyV,Uth)) ) 
+		axVp.plot( VyV*1e3,Uth , 'k--' , label='Theoretical' )
+		MVprof=zeros((Np,len(PosV)))
+		MKprof=zeros((Np,len(PosV)))
+		for n,p in enumerate(PosV) :
+			Vprof=F_int['Vel'](Np*[p],VyV) ; MVprof[:,n]=Vprof
+			Kprof=F_int['k'  ](Np*[p],VyV) ; MKprof[:,n]=Kprof
 			print('=> x/Lx=%.2f  ,  Max V=%.3f [m/s]  ,  Mean V=%.3f [m/s]'%(p/Lc,max(Vprof),fl.Umoy(VyV,Vprof)) ) 
 			axVp.plot( VyV*1e3,Vprof , label='x/Lc=%.2f'%(p/Lc) )
 			axKp.plot( VyV*1e3,Kprof , label='x/Lc=%.2f'%(p/Lc) )
-		print( '=> Poiseuil  ,  Max V=%.3f [m/s]  ,  Mean V=%.3f [m/s]'%(max(Uth),fl.Umoy(VyV,Uth)) ) 
-		axVp.plot( VyV*1e3,Uth , 'k--' , label='Theoretical' )
 		axVp.legend(fontsize=20) ; util.SaveFig(figVp,dirp+'Inlet-Velocity.pdf')
 		axKp.legend(fontsize=20) ; util.SaveFig(figKp,dirp+'Inlet-TKE.pdf'     )
+		if DATA :
+			St_data=dirp+'Inlet-Profiles-Velocity.csv'
+			with open(St_data,'w') as file :
+				writer=csv.writer(file)
+				writer.writerow( ['r(mm)'] + [ 'x/Lc=%.2f'%(p/Lc) for p in PosV ] )
+				writer.writerows( column_stack( ( VyV*1e3 , MVprof ) ) )
+			file.closed
+			St_data=dirp+'Inlet-Profiles-TKE.csv'
+			with open(St_data,'w') as file :
+				writer=csv.writer(file)
+				writer.writerow( ['r(mm)'] + [ 'x/Lc=%.2f'%(p/Lc) for p in PosV ] )
+				writer.writerows( column_stack( ( VyV*1e3 , MKprof ) ) )
+			file.closed
 else : 
 	Vy=[]
 	D_int={}
@@ -210,10 +246,8 @@ def PlotFile(ax,dir0,var,nc) :
 	for n,k in enumerate(Keys[1:]) :
 		i= n//nc
 		j= n-nc*i
-		ax[i,j].plot(Rad,D[k],label=dir0.split('/')[-2])
-	# ax[i,j].legend(bbox_to_anchor=ax[-1,-1].bbox)
-	# ax[i,j].legend(loc='center left',bbox_to_anchor=(1,0.5))
-	ax[-1,-1].plot(1,1,'.',label=dir0.split('/')[-2])
+		ax[i,j].plot(Rad,D[k]) #,label=dir0.split('/')[-2])
+	ax[-1,-1].plot(1,1,'.',label=dir0.split('/')[-2][5:])
 	ax[-1,-1].legend(loc='center',bbox_to_anchor=(0.5,0.5))
 #=====================================================================================
 def Profile(ax,Vy,D_int,Data,Cor,Err,p,var,tpos,xlim) :
@@ -293,7 +327,9 @@ for n,p in enumerate(IPos_s) :
 		if 'ch4'  in Vars : axM[i,j].set_xlabel('r [mm]',fontsize=20)
 
 if COMPA :
+	dirp=dirc+'PLOT/'
 	D_compa=[ d for d in os.listdir(dirc) if d[:5]=='PLOT-' ]
+	D_compa.sort()
 	for d in D_compa :
 		dc=dirc+d+'/'
 		if 'T'    in Vars : PlotFile(axT,dc,'T'   ,nc)

@@ -20,7 +20,8 @@ import sys
 import time
 import Fluent as fl
 import FluentWally as fw
-import ParamsJaravel as pm
+# import ParamsJaravel as pm
+import ParamsSevault as pm
 
 t0=time.time()
 (plt,mtp)=util.Plot0()
@@ -98,6 +99,7 @@ if 'mix' in Adds or 'mix2' in Adds :
     Ys=1-(Yc+Yo)
     Yt=Y_o2+Y_h2o+Y_ch4+Y_co+Y_co2+Y_n2 ; print('=> Yt  : {:.3f}  ,  {:.3f}'.format(min(Yt),max(Yt)))
     Mix_f=(Yc-Yc_o)/(Yc_m-Yc_o) ; print('=> Mix_f : {:.3f}  ,  {:.3f}'.format(min(Mix_f),max(Mix_f)))
+    # Mix_f=(Yc-Yc_o)/(Yc_m-Yc_o) ; print('=> Mix_f : {:.3f}  ,  {:.3f}'.format(min(Mix_f),max(Mix_f)))
     Mix_o=(Yo-Yo_m)/(Yo_o-Yo_m) ; print('=> Mix_o : {:.3f}  ,  {:.3f}'.format(min(Mix_o),max(Mix_o)))
     Mix_n=(Yn-Yn_m)/(Yn_o-Yn_m) ; print('=> Mix_n : {:.3f}  ,  {:.3f}'.format(min(Mix_n),max(Mix_n)))
     Mix_s=1-(Mix_f+Mix_n)       ; print('=> Mix_s : {:.3f}  ,  {:.3f}'.format(min(Mix_s),max(Mix_s)))
