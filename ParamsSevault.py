@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 #=====> Boudary conditions
-BC_f={'T':300 , 'V':98.2  , 'H2':0.55 , 'O2':0    ,'N2':0 , 'H2O':0 , 'CH4':0.45 , 'CO2':0    } # 55p H2 , Re 15k
-BC_o={'T':300 , 'V':0.778 , 'H2':0    , 'O2':0.32 ,'N2':0 , 'H2O':0 , 'CH4':0    , 'CO2':0.68 }
+BC_f={'T':300 , 'V':98.2  , 'H2':0.55 , 'O2':0    ,'N2':0 , 'H2O':0 , 'CH4':0.45 , 'CO2':0    , 'unit':'X'} # 55p H2 , Re 15k
+BC_o={'T':300 , 'V':0.778 , 'H2':0    , 'O2':0.32 ,'N2':0 , 'H2O':0 , 'CH4':0    , 'CO2':0.68 , 'unit':'X'}
 
 #=====> Dimensions
 D0=  5e-3
@@ -30,10 +30,10 @@ dirs=dir0+'DATA-Oxy/Mean_RMS/'
 # dirc='/mnt/d/FLUENT/Sandia-Sevault/RUN-00-COLD/DUMP-05-Side/'
 # dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-03-Tw1400/'
 # dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-04-DF3/'
-# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-04-Tprof/'
+dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-04-Tprof/'
+# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-05-ke/'
 # dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-05-DF4/'
 # dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-05-Tw400-Cmix/'
-dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-05-ke/'
 # dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP/'
 dird=dirc+'DATA/'
 dirp=dirc+'PLOT/'

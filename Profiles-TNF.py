@@ -33,9 +33,6 @@ t0=time.time()
 cmesh=1e3
 
 #====================> Burner
-# Case='Jaravel'
-# Case='Garnier'
-# Case='Sevault'
 Case=Sysa[0]
 if   Case=='Jaravel' : from ParamsJaravel import * ; title=''
 elif Case=='Garnier' : from ParamsGarnier import * ; title='he {:.0f} %'.format(he*100)

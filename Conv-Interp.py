@@ -12,33 +12,34 @@ if ip is not None:
 #                     Modules
 #===================================================================================
 import Utilities as util
-(Sysa,NSysa,Arg)=util.Parseur(['Plot'],0,'Arg : ')
-(                             [ PLOT ])=Arg
+(Sysa,NSysa,Arg)=util.Parseur(['Plot','Out'],1,'Arg : Case [ Jaravel | Garnier | Sevault ] ')
+(                             [ PLOT , OUT ])=Arg
 
 from numpy import *
 import sys
 import time
 import Fluent as fl
 import FluentWally as fw
-# import ParamsJaravel as pm
-import ParamsSevault as pm
 
 t0=time.time()
 (plt,mtp)=util.Plot0()
 #%%=================================================================================
 #                     Parameters
 #===================================================================================
+Case=Sysa[0]
+if   Case=='Jaravel' : import ParamsJaravel as pm ; Species=fl.Spe_Laera
+elif Case=='Garnier' : import ParamsGarnier as pm ; Species=fl.Spe_UCSD
+elif Case=='Sevault' : import ParamsSevault as pm ; Species=fl.Spe_Laera_l1
+else : sys.exit('=> Error : Case not recognized')
 
-# file_in='/mnt/scratch/PRECIZE/Sandia-Jaravel/RUN-D100-02-Laera/INIT-Fluent/Interp-00-Fluent.ip'
-# file_in='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-00-COLD/DUMP-02-OD2/DATA/Interp-Cold.ip'
-# file_in='/mnt/scratch/ZEUS/FLUENT/Sandia-Garnier/RUN-01-Big/DUMP-02-UCSD-EDC/DATA/Interp-Big-UCSD.ip'
-file_in='/mnt/d/FLUENT/Sandia-Sevault/RUN-00-COLD/DUMP-05-Side/DATA/Interp-Big-Laera.ip'
+file_in=pm.dird+'Interp-Big-Laera.ip'
 file_ou=file_in[:-3]+'-New.ip'
 
+Adds=['mix']
 # Adds=['mix','mix2']
 # Adds=['H2Rad','Ignit']
 # Adds=['Ignit']
-Adds=['Laera','Ignit']
+# Adds=['Laera','Ignit']
 
 Fuel='H2'
 dil=10
@@ -55,6 +56,10 @@ data_in=fw.FluentInterpolationParser(file_in)
 #%%=================================================================================
 util.Section('Processing : {:.3f}'.format(time.time()-t0),1,5,'r')
 #===================================================================================
+BC_f=pm.BC_f
+BC_o=pm.BC_o
+if BC_f['unit']=='X' : BC_f=fl.ConvBC_XY(BC_f)
+if BC_o['unit']=='X' : BC_o=fl.ConvBC_XY(BC_o)
 
 #===============> Integer
 Nd=data_in.n_dimensions
@@ -67,43 +72,31 @@ X1=data_in.get_data( 'x1' )
 
 #===============> Species
 if 'mix' in Adds or 'mix2' in Adds :
-    Species=fl.Spe_Laera
-    I_h2 =Species.index('H2' )
-    I_n2 =Species.index('N2' )
-    I_o2 =Species.index('O2' )
-    I_h2o=Species.index('H2O')
-    I_co =Species.index('CO' )
-    I_co2=Species.index('CO2')
-    I_ch4=Species.index('CH4')
-    Y_h2 =data_in.get_data( 'species-'+str(I_h2 ) ) ; print('=> h2  : {:.3f}  ,  {:.3f}'.format(min(Y_h2 ),max(Y_h2 )))
-    Y_n2 =data_in.get_data( 'species-'+str(I_n2 ) ) ; print('=> n2  : {:.3f}  ,  {:.3f}'.format(min(Y_n2 ),max(Y_n2 )))
-    Y_o2 =data_in.get_data( 'species-'+str(I_o2 ) ) ; print('=> o2  : {:.3f}  ,  {:.3f}'.format(min(Y_o2 ),max(Y_o2 )))
-    Y_h2o=data_in.get_data( 'species-'+str(I_h2o) ) ; print('=> h2o : {:.3f}  ,  {:.3f}'.format(min(Y_h2o),max(Y_h2o)))
-    Y_co =data_in.get_data( 'species-'+str(I_co ) ) ; print('=> co  : {:.3f}  ,  {:.3f}'.format(min(Y_co ),max(Y_co )))
-    Y_co2=data_in.get_data( 'species-'+str(I_co2) ) ; print('=> co2 : {:.3f}  ,  {:.3f}'.format(min(Y_co2),max(Y_co2)))
-    Y_ch4=data_in.get_data( 'species-'+str(I_ch4) ) ; print('=> ch4 : {:.3f}  ,  {:.3f}'.format(min(Y_ch4),max(Y_ch4)))
+    if 'N2'  in Species : Y_n2 =data_in.get_data( 'species-'+str(Species.index('N2' )) ) ; print('=> n2  : {:.3f}  ,  {:.3f}'.format(min(Y_n2 ),max(Y_n2 )))
+    if 'H2'  in Species : Y_h2 =data_in.get_data( 'species-'+str(Species.index('H2' )) ) ; print('=> h2  : {:.3f}  ,  {:.3f}'.format(min(Y_h2 ),max(Y_h2 )))
+    if 'O2'  in Species : Y_o2 =data_in.get_data( 'species-'+str(Species.index('O2' )) ) ; print('=> o2  : {:.3f}  ,  {:.3f}'.format(min(Y_o2 ),max(Y_o2 )))
+    if 'H2O' in Species : Y_h2o=data_in.get_data( 'species-'+str(Species.index('H2O')) ) ; print('=> h2o : {:.3f}  ,  {:.3f}'.format(min(Y_h2o),max(Y_h2o)))
+    if 'CO'  in Species : Y_co =data_in.get_data( 'species-'+str(Species.index('CO' )) ) ; print('=> co  : {:.3f}  ,  {:.3f}'.format(min(Y_co ),max(Y_co )))
+    if 'CO2' in Species : Y_co2=data_in.get_data( 'species-'+str(Species.index('CO2')) ) ; print('=> co2 : {:.3f}  ,  {:.3f}'.format(min(Y_co2),max(Y_co2)))
+    if 'CH4' in Species : Y_ch4=data_in.get_data( 'species-'+str(Species.index('CH4')) ) ; print('=> ch4 : {:.3f}  ,  {:.3f}'.format(min(Y_ch4),max(Y_ch4)))
     Temp =data_in.get_data( 'temperature' )
     Vx =data_in.get_data( 'x-velocity' )
     Vy =data_in.get_data( 'y-velocity' )
     Vel=hypot(Vx,Vy)
-    Yc_m=fl.Yc(pm.Y_m,fl.Mol_m) ; Yo_m=fl.Yo(pm.Y_m,fl.Mol_m) ; Yn_m=pm.Y_m['N2']
-    Yc_p=fl.Yc(pm.Y_p,fl.Mol_m) ; Yo_p=fl.Yo(pm.Y_p,fl.Mol_m) ; Yn_p=pm.Y_p['N2']
-    Yc_o=fl.Yc(pm.Y_o,fl.Mol_m) ; Yo_o=fl.Yo(pm.Y_o,fl.Mol_m) ; Yn_o=pm.Y_o['N2']
-    Dic_c={'CH4':Y_ch4,'CO2':Y_co2,'CO':Y_co}
-    Dic_o={'O2' :Y_o2 ,'CO2':Y_co2,'CO':Y_co,'H2O':Y_h2o}
-    Dic_h={'CH4':Y_ch4,'H2O':Y_h2o,'H2':Y_h2}
-    Yc=fl.Yc( Dic_c , fl.Mol_m)
-    Yo=fl.Yo( Dic_o , fl.Mol_m)
-    Yh=fl.Yh( Dic_h , fl.Mol_m)
-    Yn=Y_n2
-    Ys=1-(Yc+Yo)
-    Yt=Y_o2+Y_h2o+Y_ch4+Y_co+Y_co2+Y_n2 ; print('=> Yt  : {:.3f}  ,  {:.3f}'.format(min(Yt),max(Yt)))
-    Mix_f=(Yc-Yc_o)/(Yc_m-Yc_o) ; print('=> Mix_f : {:.3f}  ,  {:.3f}'.format(min(Mix_f),max(Mix_f)))
-    # Mix_f=(Yc-Yc_o)/(Yc_m-Yc_o) ; print('=> Mix_f : {:.3f}  ,  {:.3f}'.format(min(Mix_f),max(Mix_f)))
-    Mix_o=(Yo-Yo_m)/(Yo_o-Yo_m) ; print('=> Mix_o : {:.3f}  ,  {:.3f}'.format(min(Mix_o),max(Mix_o)))
-    Mix_n=(Yn-Yn_m)/(Yn_o-Yn_m) ; print('=> Mix_n : {:.3f}  ,  {:.3f}'.format(min(Mix_n),max(Mix_n)))
-    Mix_s=1-(Mix_f+Mix_n)       ; print('=> Mix_s : {:.3f}  ,  {:.3f}'.format(min(Mix_s),max(Mix_s)))
+    Yc_f=fl.Yc(pm.BC_f,fl.Mol_m) ; Yo_f=fl.Yo(pm.BC_f,fl.Mol_m) ; Yh_f=fl.Yh(pm.BC_f,fl.Mol_m) #; Yn_m=pm.BC_f['N2']
+    Yc_o=fl.Yc(pm.BC_o,fl.Mol_m) ; Yo_o=fl.Yo(pm.BC_o,fl.Mol_m) ; Yh_o=fl.Yh(pm.BC_o,fl.Mol_m) #; Yn_o=pm.BC_o['N2']
+    if 'CH4' in Species : Yc=fl.Yc( {'CH4':Y_ch4,'CO2':Y_co2,'CO':Y_co            } ,fl.Mol_m )
+    if 'CO2' in Species : Yo=fl.Yo( {'O2' :Y_o2 ,'CO2':Y_co2,'CO':Y_co,'H2O':Y_h2o} ,fl.Mol_m )
+    if 'H2'  in Species : Yh=fl.Yh( {'CH4':Y_ch4,'H2O':Y_h2o,'H2':Y_h2            } ,fl.Mol_m )
+    if 'N2'  in Species : Yn=Y_n2
+    Mix_f=(Yh-Yh_o)/(Yh_f-Yh_o) ; print('=> Mix_fh : {:.3f}  ,  {:.3f}'.format(min(Mix_f),max(Mix_f)))
+    Mix_o=(Yo-Yo_f)/(Yo_o-Yo_f) ; print('=> Mix_o : {:.3f}  ,  {:.3f}'.format(min(Mix_o),max(Mix_o)))
     if 'mix2' in Adds : 
+        # Ys=1-(Yc+Yo)
+        # Yt=Y_o2+Y_h2o+Y_ch4+Y_co+Y_co2+Y_n2 ; print('=> Yt  : {:.3f}  ,  {:.3f}'.format(min(Yt),max(Yt)))
+        # Mix_f=(Yc-Yc_o)/(Yc_f-Yc_o) ; print('=> Mix_fc : {:.3f}  ,  {:.3f}'.format(min(Mix_f),max(Mix_f)))
+        # Mix_n=(Yn-Yn_f)/(Yn_o-Yn_f) ; print('=> Mix_n : {:.3f}  ,  {:.3f}'.format(min(Mix_n),max(Mix_n)))
+        # Mix_s=1-(Mix_f+Mix_n)       ; print('=> Mix_s : {:.3f}  ,  {:.3f}'.format(min(Mix_s),max(Mix_s)))
         # Zf=Y_ch4+Y_o2+Y_n2
         # Zp=Y_o2+Y_h2o+Y_co2+Y_n2
         # Zo=Y_o2+Y_n2
@@ -161,7 +154,6 @@ if 'Ignit' in Adds :
     Temp=Tu+C*(Tad-Tu)
 
 #===============> Visualisation
-# PLOT=True
 if PLOT :
     c_inf=mtp.colormaps['inferno']
     c_civ=mtp.colormaps['cividis']
@@ -171,53 +163,63 @@ if PLOT :
     r1=0.5*pm.D1
     r2=0.5*pm.D2
     re=0.5*pm.ep
-    CMask=[
-        [0, pm.Lc,pm.Lc , 0,0 , pm.Lc,pm.Lc , pm.Ls,pm.Ls,0],
-        [r0,r0 , r0+pm.ep,r0+pm.ep , r1,r1, r1+pm.ep,r1+pm.ep, r2,r2]
-    ]
+    if Case=='Jaravel' :
+        CMask=[
+            [0 ,pm.Lc,   pm.Lc,       0, 0,pm.Lc,   pm.Lc,   pm.Ls,pm.Ls,0 ],
+            [r0,   r0,r0+pm.ep,r0+pm.ep,r1,   r1,r1+pm.ep,r1+pm.ep,   r2,r2]]
+    elif Case=='Garnier' : pass
+    elif Case=='Sevault' :
+        CMask=[
+            [0 ,pm.Lc,pm.Lc, 0],
+            [r0,   r0,   r1,r1]]
     if 'mix' in Adds or 'mix2' in Adds :
-        fl.Field2(tri,Vel  ,'Vel [m/s]',False,[0,0.5],[0,r2],0,arange(0  ,100,10  ),0,c_civ,CMask,True,'Plot/Visu-Vel.png'  ,(20,5))
-        fl.Field2(tri,Temp ,'Temp [K]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_inf,CMask,True,'Plot/Visu-Temp.png' ,(20,5))
-        fl.Field2(tri,Y_ch4,'Y_ch4 [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-CH4.png'  ,(20,5))
-        fl.Field2(tri,Y_o2 ,'Y_o2 [-]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-O2.png'   ,(20,5))
-        fl.Field2(tri,Y_n2 ,'Y_n2 [-]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-N2.png'   ,(20,5))
-        fl.Field2(tri,Y_h2 ,'Y_h2 [-]' ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-H2.png'   ,(20,5))
-        fl.Field2(tri,Yh   ,'Yh [-]'   ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Yh.png'   ,(20,5))
-        fl.Field2(tri,Yc   ,'Yc [-]'   ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Yc.png'   ,(20,5))
-        fl.Field2(tri,Yo   ,'Yo [-]'   ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Yo.png'   ,(20,5))
-        fl.Field2(tri,Ys   ,'Ys [-]'   ,False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Ys.png'   ,(20,5))
-        fl.Field2(tri,Yt   ,'Yt [-]'   ,False,[0,0.5],[0,r2],0,arange(0.9,1.1,0.01),0,c_vir,CMask,True,'Plot/Visu-Yt.png'   ,(20,5))
-        fl.Field2(tri,Mix_f,'Mix_f [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Mix_f.png',(20,5))
-        fl.Field2(tri,Mix_o,'Mix_o [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Mix_o.png',(20,5))
-        fl.Field2(tri,Mix_n,'Mix_n [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Mix_n.png',(20,5))
-        fl.Field2(tri,Mix_s,'Mix_s [-]',False,[0,0.5],[0,r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,'Plot/Visu-Mix_s.png',(20,5))
+        fl.Field2(                      tri,Vel  ,'Vel [m/s]',False,[0,0.5],[0,0.75*r2],0,arange(0  ,500 ,10 ),0,c_civ,CMask,True,pm.dirp+'Interp-Vel.png'  ,(20,5))
+        fl.Field2(                      tri,Temp ,'Temp [K]' ,False,[0,0.5],[0,0.75*r2],0,arange(0  ,3000,100),0,c_inf,CMask,True,pm.dirp+'Interp-Temp.png' ,(20,5))
+        if 'CH4' in Species : fl.Field2(tri,Y_ch4,'Y_ch4 [-]',False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-CH4.png'  ,(20,5))
+        if 'CO2' in Species : fl.Field2(tri,Y_co2,'Y_co2 [-]',False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-CO2.png'  ,(20,5))
+        if 'H2O' in Species : fl.Field2(tri,Y_co2,'Y_h2o [-]',False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-H2O.png'  ,(20,5))
+        if 'N2'  in Species : fl.Field2(tri,Y_n2 ,'Y_n2 [-]' ,False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-N2.png'   ,(20,5))
+        if 'O2'  in Species : fl.Field2(tri,Y_o2 ,'Y_o2 [-]' ,False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-O2.png'   ,(20,5))
+        if 'H2'  in Species : fl.Field2(tri,Y_h2 ,'Y_h2 [-]' ,False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-H2.png'   ,(20,5))
+        if 'H2'  in Species : fl.Field2(tri,Yh   ,'Yh [-]'   ,False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-Yh.png'   ,(20,5))
+        if 'CH4' in Species : fl.Field2(tri,Yc   ,'Yc [-]'   ,False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-Yc.png'   ,(20,5))
+        if 'O2'  in Species : fl.Field2(tri,Yo   ,'Yo [-]'   ,False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-Yo.png'   ,(20,5))
+        fl.Field2(                      tri,Mix_f,'Mix_f [-]',False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-Mix_f.png',(20,5))
+        fl.Field2(                      tri,Mix_o,'Mix_o [-]',False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-Mix_o.png',(20,5))
+        # fl.Field2(tri,Ys   ,'Ys [-]'   ,False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-Ys.png'   ,(20,5))
+        # fl.Field2(tri,Yt   ,'Yt [-]'   ,False,[0,0.5],[0,0.75*r2],0,arange(0.9,1.1,0.01),0,c_vir,CMask,True,pm.dirp+'Interp-Yt.png'   ,(20,5))
+        # fl.Field2(tri,Mix_n,'Mix_n [-]',False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-Mix_n.png',(20,5))
+        # fl.Field2(tri,Mix_s,'Mix_s [-]',False,[0,0.5],[0,0.75*r2],0,arange(0  ,1.1,0.1 ),0,c_vir,CMask,True,pm.dirp+'Interp-Mix_s.png',(20,5))
     if 'mix2' in Adds :
-        fl.Field2(tri,Zf ,'Zf [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-Zf.png',(20,5))
-        fl.Field2(tri,Zp ,'Zp [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-Zp.png',(20,5))
-        fl.Field2(tri,Zo ,'Zo [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-Zo.png',(20,5))
-        # fl.Field2(tri,Zs ,'Zs [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-Zs.png',(20,5))
-        fl.Field2(tri,F_f ,'F_f [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-F_f.png',(20,5))
-        fl.Field2(tri,F_p ,'F_p [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-F_p.png',(20,5))
-        fl.Field2(tri,F_o ,'F_o [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Visu-F_o.png',(20,5))
+        fl.Field2(tri,Zf ,'Zf [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Interp-Zf.png',(20,5))
+        fl.Field2(tri,Zp ,'Zp [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Interp-Zp.png',(20,5))
+        fl.Field2(tri,Zo ,'Zo [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Interp-Zo.png',(20,5))
+        # fl.Field2(tri,Zs ,'Zs [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Interp-Zs.png',(20,5))
+        fl.Field2(tri,F_f ,'F_f [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Interp-F_f.png',(20,5))
+        fl.Field2(tri,F_p ,'F_p [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Interp-F_p.png',(20,5))
+        fl.Field2(tri,F_o ,'F_o [-]' ,False,[0,0.5],[],0,arange(0,1.1,0.1),0,c_vir,CMask,True,'Plot/Interp-F_o.png',(20,5))
     if 'Ignit' in Adds :
         fl.Field2(tri,Temp ,'Temp [K]' ,False,[0,0.5],[0,r2],0,[],0,c_inf,CMask,True,'Plot/Visu-Temp.png' ,(20,5))
 
+if not OUT : sys.exit('=> End of processing')
 #%%=================================================================================
 util.Section('Writing : {:.3f}'.format(time.time()-t0),1,5,'r')
 #===================================================================================
 
 #===============> Output
-Fields_ou=data_in.variable_names[Nd:-Ns_in]+Nspe
-if 'mix'  in Adds : Fields_ou+=['fmean']
-if 'mix2' in Adds : Fields_ou+=['fmean2']
+Fields_ou=data_in.variable_names[Nd:-Ns_in]#+Nspe
+if    'mix'  in Adds : Fields_ou+=['fmean']
+if    'mix2' in Adds : Fields_ou+=['fmean2']
+if not 'mix' in Adds : Fields_ou+=Nspe
 Nv_ou=len(Fields_ou) ; Nv0=Nd+Nv-Ns_in
 
 DATA_ou=zeros((Np,Nd+Nv_ou))
 for n,v in enumerate(data_in.variable_names[:-Ns_in]) : 
     DATA_ou[:,n]=data_in.get_data(v)
-DATA_ou[:,Nv0:Nv0+Ns_ou]=DSPE_ou
-if   'mix'  in Adds : DATA_ou[:,Nv0+Ns_ou ]= Mix    ; Fields_ou=data_in.variable_names[Nd:]+['fmean']
-elif 'mix2' in Adds : DATA_ou[:,Nv0+Ns_ou:]=[Yf,Yp] ; Fields_ou=data_in.variable_names[Nd:]+['fmean','fmean2']
+# DATA_ou[:,Nv0:Nv0+Ns_ou]=DSPE_ou
+if   'mix'  in Adds : DATA_ou[:,Nv0+Ns_ou ]= Mix_f  #; Fields_ou=data_in.variable_names[Nd:]+['fmean']
+elif 'mix2' in Adds : DATA_ou[:,Nv0+Ns_ou:]=[Yf,Yp] #; Fields_ou=data_in.variable_names[Nd:]+['fmean','fmean2']
+else                : DATA_ou[:,Nv0:Nv0+Ns_ou]=DSPE_ou
 if 'Ignit'  in Adds : DATA_ou[:,Nd+Fields_ou.index('temperature')]=Temp 
 
 fou=open(file_ou,'w')
