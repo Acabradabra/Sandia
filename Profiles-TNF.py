@@ -40,8 +40,8 @@ elif Case=='Sevault' : from ParamsSevault import * ; title='re {:.0f} k  ,  h2 {
 else : sys.exit('=> Error : Case not recognized')
 
 #====================> Fields
-Vars=['Vel','k','T','mix']
-# Vars=['Vel','k','T','o2','h2','ch4','co2','co']
+# Vars=['Vel','k','T','mix']
+Vars=['Vel','k','T','o2','h2','ch4','co2','co']
 # Vars=['Vel','k','T','mixH','o2','h2','n2','h2o']
 # Vars=['T','o2','h2','ch4','co2','co']
 # Vars=['Vel','T','o2','h2']
@@ -336,6 +336,16 @@ for n,p in enumerate(IPos_s) :
 		if 'h2o'  in Vars : axP[i,j].set_xlabel('r [mm]',fontsize=20)
 		if 'co2'  in Vars : axC[i,j].set_xlabel('r [mm]',fontsize=20)
 		if 'ch4'  in Vars : axM[i,j].set_xlabel('r [mm]',fontsize=20)
+	if j==0 and i==1 : 
+		if 'T'    in Vars : axT[i,j].set_ylabel(r'$T~[K]$'       ,fontsize=20)
+		if 'mixH' in Vars : axZ[i,j].set_ylabel(r'$Z~[-]$'       ,fontsize=20)
+		if 'o2'   in Vars : axO[i,j].set_ylabel(r'$Y_{O_2}~[-]$' ,fontsize=20)
+		if 'h2'   in Vars : axH[i,j].set_ylabel(r'$Y_{H_2}~[-]$' ,fontsize=20)
+		if 'n2'   in Vars : axN[i,j].set_ylabel(r'$Y_{N_2}~[-]$' ,fontsize=20)
+		if 'co'   in Vars : axA[i,j].set_ylabel(r'$Y_{CO}~[-]$'  ,fontsize=20)
+		if 'h2o'  in Vars : axP[i,j].set_ylabel(r'$Y_{H_2O}~[-]$',fontsize=20)
+		if 'co2'  in Vars : axC[i,j].set_ylabel(r'$Y_{CO_2}~[-]$',fontsize=20)
+		if 'ch4'  in Vars : axM[i,j].set_ylabel(r'$Y_{CH_4}~[-]$',fontsize=20)
 
 if COMPA :
 	dirp=dirc+'PLOT/'

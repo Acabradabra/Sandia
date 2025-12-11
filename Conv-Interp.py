@@ -26,20 +26,23 @@ t0=time.time()
 #%%=================================================================================
 #                     Parameters
 #===================================================================================
-Case=Sysa[0]
+Case='PRECIZE' # Sysa[0]
 if   Case=='Jaravel' : import ParamsJaravel as pm ; Species=fl.Spe_Laera
 elif Case=='Garnier' : import ParamsGarnier as pm ; Species=fl.Spe_UCSD
 elif Case=='Sevault' : import ParamsSevault as pm ; Species=fl.Spe_Laera_l1
+elif Case=='PRECIZE' : import ParamsPRECIZE as pm ; Species=fl.Spe_Walter
 else : sys.exit('=> Error : Case not recognized')
 
-file_in=pm.dird+'Interp-Big-Laera.ip'
+# file_in=pm.dird+'Interp-Big-Laera.ip'
+file_in=pm.dird+'Interp-PRECIZE-TXT.ip'
 file_ou=file_in[:-3]+'-New.ip'
 
-Adds=['mix']
+# Adds=['mix']
 # Adds=['mix','mix2']
 # Adds=['H2Rad','Ignit']
 # Adds=['Ignit']
 # Adds=['Laera','Ignit']
+Adds=['Walter']
 
 Fuel='H2'
 dil=10
@@ -126,9 +129,15 @@ if 'H2Rad' in Adds :
             DSPE_ou[:,n]=data_in.get_data( 'species-'+str(i) )
         else :
             print('=> Species {} not in input file'.format(s))
-elif 'Laera' in Adds :
-    Spe_in=fl.Spe_Laera_l0
-    Spe_ou=fl.Spe_Laera_l1
+elif 'Laera' in Adds or 'Walter' in Adds :
+    if 'Laera' in Adds :
+        Spe_in=fl.Spe_Laera_l0
+        Spe_ou=fl.Spe_Laera_l1
+    elif 'Walter' in Adds :
+        # Spe_in=fl.Spe_Laera_l1
+        # Spe_ou=fl.Spe_Walter
+        Spe_in=fl.Spe_Walter
+        Spe_ou=fl.Spe_Laera_l1
     Nspe=[]
     Ns_in,Ns_ou=len(Spe_in),len(Spe_ou)
     DSPE_ou=zeros((Np,Ns_ou))
@@ -206,7 +215,12 @@ util.Section('Writing : {:.3f}'.format(time.time()-t0),1,5,'r')
 #===================================================================================
 
 #===============> Output
-Fields_ou=data_in.variable_names[Nd:-Ns_in]#+Nspe
+V_mesh=     [ v for v in data_in.variable_names if v in ['x0','x1','x2'] ]
+V_spec=sort([ v for v in data_in.variable_names if 'species' in v ])
+V_flow=     [ v for v in data_in.variable_names if not v in V_mesh and not v in V_spec ]
+
+# Fields_ou=data_in.variable_names[Nd:-Ns_in]#+Nspe
+Fields_ou=V_flow[:]
 if    'mix'  in Adds : Fields_ou+=['fmean']
 if    'mix2' in Adds : Fields_ou+=['fmean2']
 if not 'mix' in Adds : Fields_ou+=Nspe
@@ -214,11 +228,13 @@ Nv_ou=len(Fields_ou) ; Nv0=Nd+Nv-Ns_in
 print('=> Fields out : ',Fields_ou)
 
 DATA_ou=zeros((Np,Nd+Nv_ou))
-for n,v in enumerate(data_in.variable_names[:-Ns_in]) : 
+# for n,v in enumerate(data_in.variable_names[:-Ns_in]) : 
+for n,v in enumerate(V_mesh+V_flow) : 
+    print(n,v)
     DATA_ou[:,n]=data_in.get_data(v)
 if   'mix'  in Adds : DATA_ou[:,Nv0 ]= Mix_f 
 elif 'mix2' in Adds : DATA_ou[:,Nv0:]=[Yf,Yp]
-else                : DATA_ou[:,Nv0:Nv0+Ns_ou]=DSPE_ou
+else                : DATA_ou[:,Nv0:Nv0+Ns_ou+1]=DSPE_ou
 if 'Ignit'  in Adds : DATA_ou[:,Nd+Fields_ou.index('temperature')]=Temp 
 
 if not OUT : sys.exit('=> End of processing')

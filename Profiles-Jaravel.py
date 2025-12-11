@@ -25,15 +25,15 @@ t0=time.time()
 #%%=================================================================================
 #                     Parameters
 #===================================================================================
+cmesh=1e3
 
 from ParamsJaravel import *
 dirr='/mnt/d/Python/Sandia/REF-Jaravel/'
 Lines=['l0','l1','l2','l3','l75','l15','l30']
 # dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP/DATA/'
-dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-02-Laera/DUMP/DATA/'
-
-# dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-02-Laera/DUMP-07-EDC-NOx-FD39-O/DATA/'
-dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP-03-EDC-BFER-NOx-Turb-Phi1-Tp/DATA/'
+# dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-02-Laera/DUMP/DATA/'
+dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-02-Laera/DUMP-07-EDC-NOx-FD39-O/DATA/'
+# dird='/mnt/scratch/ZEUS/FLUENT/Sandia-Jaravel/RUN-D100-01-EDM/DUMP-03-EDC-BFER-NOx-Turb-Phi1-Tp/DATA/'
 
 dirp=dird+'PLOT/'
 
@@ -53,11 +53,11 @@ if VISU :
 	util.Section( 'Visualisation : {:.3f} s'.format(time.time()-t0),1,5,'r' )
 	Vp=[ Lc+n*D0 for n in [1,2,3,7.5,15,30] ]
 
-	fl.Visu(dird+'Data-all.dat','velocity-magnitude','Velocity [m/s]'        ,[0,0.3],[],arange(0,100,10)    ,[],(25,5),'cividis',dirp+'Visu-Velocity.png'   ,[])
-	fl.Visu(dird+'Data-all.dat','temperature'       ,'Temperature [K]'       ,[0,0.3],[],arange(250,2500,250),[],(25,5),'inferno',dirp+'Visu-Temperature.png',['LINES',Vp])
-	fl.Visu(dird+'Data-all.dat','mixC'              ,'Mixture fraction [-]'  ,[0,0.3],[],arange(0,1.1,0.1)   ,[],(25,5),'viridis',dirp+'Visu-Mix.png'        ,['MIXC',[fl.Mol_m,BC_m,BC_o]])
-	fl.Visu(dird+'Data-all.dat','co'                ,'Carbon monoxide [x100]',[0,0.3],[],arange(0,11,1)      ,[],(25,5),'viridis',dirp+'Visu-CO.png'         ,['CO',1e2])
-	fl.Visu(dird+'Data-all.dat','no'                ,r'NO [$x10^6$]'         ,[0,0.3],[],arange(0,100,10)      ,[],(25,5),'viridis',dirp+'Visu-NO.png'       ,['NO',1e6])
+	fl.Visu(dird+'Data-all.dat','velocity-magnitude','Velocity [m/s]'        ,[0,0.3],[],arange(0,100,10)    ,cmesh,[],(25,5),'cividis',dirp+'Visu-Velocity.png'   ,[])
+	fl.Visu(dird+'Data-all.dat','temperature'       ,'Temperature [K]'       ,[0,0.3],[],arange(250,2500,250),cmesh,[],(25,5),'inferno',dirp+'Visu-Temperature.png',['LINES',Vp])
+	fl.Visu(dird+'Data-all.dat','mixC'              ,'Mixture fraction [-]'  ,[0,0.3],[],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Visu-Mix.png'        ,['MIXC',[fl.Mol_m,BC_m,BC_o]])
+	fl.Visu(dird+'Data-all.dat','co'                ,'Carbon monoxide [x100]',[0,0.3],[],arange(0,11,1)      ,cmesh,[],(25,5),'viridis',dirp+'Visu-CO.png'         ,['CO',1e2])
+	fl.Visu(dird+'Data-all.dat','no'                ,r'NO [$x10^6$]'         ,[0,0.3],[],arange(0,100,10)    ,cmesh,[],(25,5),'viridis',dirp+'Visu-NO.png'         ,['NO',1e6])
 
 	# sys.exit('=> End of visualisation')
 
@@ -134,7 +134,7 @@ for n,l in enumerate(Lines[1:]) :
 		axT[j,i].set_ylabel(r'<T> [K]'       ,fontsize=30)
 		axU[j,i].set_ylabel(r'<U> [m/s]'     ,fontsize=30)
 		axZ[j,i].set_ylabel(r'<Z> [-]'       ,fontsize=30)
-		axC[j,i].set_ylabel(r'<$Y_{CO}$> [-]',fontsize=30)
+		axC[j,i].set_ylabel(r'<$Y_{CO}$> [%]',fontsize=30)
 		axN[j,i].set_ylabel(r'<$Y_{NO}$> [-]',fontsize=30)
 	PlotIm(axT[j,i],dirr+l[1:]+'D-T.png' ,[0,rm,0,yt])
 	PlotIm(axU[j,i],dirr+l[1:]+'D-U.png' ,[0,rm,0,yu])
