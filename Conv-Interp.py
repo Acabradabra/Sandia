@@ -145,7 +145,9 @@ elif 'Laera' in Adds or 'Walter' in Adds :
         Nspe.append( 'species-'+str(n) )
         if s in Spe_in :
             i=Spe_in.index(s)
-            DSPE_ou[:,n]=data_in.get_data( 'species-'+str(i) )
+            Vspec=data_in.get_data( 'species-'+str(i) )
+            print('=> Species %s  ,  id %i  ,  BD : %.3e  %.3e' % (s,i,min(Vspec),max(Vspec)) )
+            DSPE_ou[:,n]=Vspec
         else :
             print('=> Species {} not in input file'.format(s))
 else :
@@ -219,22 +221,20 @@ V_mesh=     [ v for v in data_in.variable_names if v in ['x0','x1','x2'] ]
 V_spec=sort([ v for v in data_in.variable_names if 'species' in v ])
 V_flow=     [ v for v in data_in.variable_names if not v in V_mesh and not v in V_spec ]
 
-# Fields_ou=data_in.variable_names[Nd:-Ns_in]#+Nspe
 Fields_ou=V_flow[:]
 if    'mix'  in Adds : Fields_ou+=['fmean']
 if    'mix2' in Adds : Fields_ou+=['fmean2']
 if not 'mix' in Adds : Fields_ou+=Nspe
-Nv_ou=len(Fields_ou) ; Nv0=Nd+Nv-Ns_in
+Nv_ou=len(Fields_ou) ; Nv0=Nd+len(V_flow) ; Nv1=Nv0+Ns_ou
 print('=> Fields out : ',Fields_ou)
+Fields_all=V_mesh+Fields_ou ; Nall=len(Fields_all)
 
 DATA_ou=zeros((Np,Nd+Nv_ou))
-# for n,v in enumerate(data_in.variable_names[:-Ns_in]) : 
 for n,v in enumerate(V_mesh+V_flow) : 
-    print(n,v)
     DATA_ou[:,n]=data_in.get_data(v)
 if   'mix'  in Adds : DATA_ou[:,Nv0 ]= Mix_f 
 elif 'mix2' in Adds : DATA_ou[:,Nv0:]=[Yf,Yp]
-else                : DATA_ou[:,Nv0:Nv0+Ns_ou+1]=DSPE_ou
+else                : DATA_ou[:,Nv0:Nv1]=DSPE_ou
 if 'Ignit'  in Adds : DATA_ou[:,Nd+Fields_ou.index('temperature')]=Temp 
 
 if not OUT : sys.exit('=> End of processing')
@@ -245,10 +245,13 @@ fou.write( '{}\n'.format(Np) )
 fou.write( '{}\n'.format(Nv_ou) )
 for f in Fields_ou :
     fou.write( '{}\n'.format(f) )
-for v in range(Nv_ou+Nd) :
+# for v in range(Nv_ou+Nd) :
+for v in range(Nall) :
+    t1=time.time()
     fou.write('(')
     for p in range(Np) : fou.write( ' {:.12e}\n'.format(DATA_ou[p,v]) )
     fou.write(')\n')
+    util.Section('Var : {}/{}  ,  Dt:{:.3f}'.format( Fields_all[v],Nall , time.time()-t1 ),0,1,'b')
 fou.close()
 
 #%%=================================================================================

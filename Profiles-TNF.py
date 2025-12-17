@@ -142,15 +142,24 @@ if TPROF :
 	if ONLY : sys.exit('=> Stop after wall profile')
 #%%=================================================================================
 if STRUCT :
+	Tiso=list(array([1600,1800])-0)
 	alp=BC_f['CH4']/BC_f['H2']
 	XH2_s =1/(1.5+3*alp)
 	XCH4_s=       alp *XH2_s
 	XO2_s =(0.5+2*alp)*XH2_s
 	Mav_s=fl.Mol_m['H2']*XH2_s+fl.Mol_m['O2']*XO2_s+fl.Mol_m['CH4']*XCH4_s
-	YH_s=fl.Mol_m['H']*(4*XCH4_s+2*XH2_s)/Mav_s
+	YH_s =fl.Mol_m['H']*(4*XCH4_s+2*XH2_s)/Mav_s
+	if BC_f['unit']=='X' : BC_f=fl.ConvBC_XY(BC_f)
+	if BC_o['unit']=='X' : BC_o=fl.ConvBC_XY(BC_o)
 	YH_o=fl.Yh(BC_o,fl.Mol_m)
 	YH_f=fl.Yh(BC_f,fl.Mol_m)
 	Zst=(YH_s-YH_o)/(YH_f-YH_o) ; print('=> Stoichiometric mixture fraction Zst = %.3f'%(Zst))
+	# fl.Visu(dird+slice,'velocity-magnitude' ,r'Velocity [m/s]'        ,[0,0.3],[0,0.05],arange(0,350,50)    ,cmesh,[],(25,5),'cividis',dirp+'Struct-V.png',[])
+	# fl.Visu(dird+slice,'turb-kinetic-energy',r'k [$m^2/s^2$]'         ,[0,0.3],[0,0.05],arange(250,2500,250),cmesh,[],(25,5),'cividis',dirp+'Struct-K.png',[])
+	# fl.Visu(dird+slice,'turb-diss-rate'     ,r'$\epsilon$ [$m^2/s^3$]',[0,0.3],[0,0.05],arange(0,2e7,1e6)   ,cmesh,[],(25,5),'cividis',dirp+'Struct-E.png',[])
+	# fl.Visu(dird+slice,'tt'                 ,r'$1/t_t$ [$1/s$]'       ,[0,0.3],[0,0.05],logspace(1,4,5)     ,cmesh,[],(25,5),'cividis',dirp+'Struct-M.png',['Zst',[Zst,'b'],'MIXH',[fl.Mol_m,BC_f,BC_o],'Tiso',[1600,1800,2000]])
+	# fl.Visu(dird+slice,'mixH'               ,r'Mixture fraction [-]'  ,[0,0.3],[0,0.05],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Struct-Z.png',['ISO',[Zst],'MIXH',[fl.Mol_m,BC_f,BC_o]])
+	fl.Visu(dird+slice,'temperature'        ,r'Temperature [K]'       ,[0,0.3],[0,0.05],arange(250,2500,250),cmesh,[],(25,5),'inferno',dirp+'Struct-T.png',['ISO',[2000],'RECIRC','b','Zst',[Zst,'b'],'MIXH',[fl.Mol_m,BC_f,BC_o]])
 	if ONLY : sys.exit('=> Stop after mixture fraction')
 #%%=================================================================================
 if VISU :
