@@ -137,7 +137,8 @@ elif 'Laera' in Adds or 'Walter' in Adds :
         # Spe_in=fl.Spe_Laera_l1
         # Spe_ou=fl.Spe_Walter
         Spe_in=fl.Spe_Walter
-        Spe_ou=fl.Spe_Laera_l1
+        # Spe_ou=fl.Spe_Laera_l1
+        Spe_ou=fl.Spe_Laera_wt
     Nspe=[]
     Ns_in,Ns_ou=len(Spe_in),len(Spe_ou)
     DSPE_ou=zeros((Np,Ns_ou))
@@ -251,7 +252,7 @@ for v in range(Nall) :
     fou.write('(')
     for p in range(Np) : fou.write( ' {:.12e}\n'.format(DATA_ou[p,v]) )
     fou.write(')\n')
-    util.Section('Var : {}/{}  ,  Dt:{:.3f}'.format( Fields_all[v],Nall , time.time()-t1 ),0,1,'b')
+    util.Section('Var : {} ,  {}/{}  ,  Dt:{:.3f}'.format( Fields_all[v] , n,Nall , time.time()-t1 ),0,1,'b')
 fou.close()
 
 #%%=================================================================================

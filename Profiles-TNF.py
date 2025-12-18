@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #%%=================================================================================
+from unittest import case
 from IPython import get_ipython
 
 ip = get_ipython()
@@ -12,8 +13,8 @@ if ip is not None:
 #                     Modules
 #===================================================================================
 import Utilities as util
-(Sysa,NSysa,Arg)=util.Parseur(['Save','Visu','Temp','Data','Over','Vel','Only','Compa','TProf','Zoom','Struct','All'],1,'Arg : Case (Jaravel,Garnier,Sevault)')
-(                             [ SAVE , VISU , TEMP , DATA , OVER , VEL , ONLY , COMPA , TPROF , ZOOM , STRUCT , ALL ])=Arg
+(Sysa,NSysa,Arg)=util.Parseur(['Save','Visu','Temp','Data','Over','Vel','Only','Compa','TProf','Zoom','Struct','Report','All'],1,'Arg : Case (Jaravel,Garnier,Sevault)')
+(                             [ SAVE , VISU , TEMP , DATA , OVER , VEL , ONLY , COMPA , TPROF , ZOOM , STRUCT , REPORT , ALL ])=Arg
 if ALL : SAVE,VISU,TEMP,OVER,DATA=True,True,True,True,True # Over : Overwrite
 if VEL : VISU,SAVE=True,True
 if COMPA : SAVE,DATA=True,True
@@ -37,6 +38,7 @@ Case=Sysa[0]
 if   Case=='Jaravel' : from ParamsJaravel import * ; title=''
 elif Case=='Garnier' : from ParamsGarnier import * ; title='he {:.0f} %'.format(he*100)
 elif Case=='Sevault' : from ParamsSevault import * ; title='re {:.0f} k  ,  h2 {:.0f} %'.format(re,h2)
+elif Case=='PRECIZE' : from ParamsPRECIZE import * ; title='PRECIZE'
 else : sys.exit('=> Error : Case not recognized')
 
 #====================> Fields
@@ -56,7 +58,7 @@ if ZOOM :
 	RX_t=[ 0,0.025]
 	RY_d=[ 0,0.010]
 	RX_d=[ 0,0.025]
-else :
+elif VISU :
 	RY_t=[ 0,0.10]
 	RX_t=[Lc,0.50]
 	RY_d=[ 0,0.04]
@@ -97,20 +99,33 @@ def List_Sevault(dirs,f) :
 		Pos_s.append( int(pos0) )
 	return(Files_s,Pos_s,[],[])
 #===================================================================================
-util.Section( 'Inlet profile : {:.3f} s'.format(time.time()-t0),0,3,'b' )
-#===================================================================================
-Umax=Umoy*(n+2)/n ; print('=> n = %.0f  ,  Umoy = %.3f [m/s]  ,  Umax = %.3f [m/s]'%(n,Umoy,Umax))
-Np=int(1e4)
-VyV=linspace(0,0.5*D0,Np)
-Uth=Umax*(1-(2*VyV/D0)**n)
-#===================================================================================
 util.Section( 'TNF reading : {:.3f} s'.format(time.time()-t0),0,3,'b' )
 #===================================================================================
 if   Case=='Jaravel' : sys.exit('=> Error : Jaravel case not implemented yet')
 elif Case=='Garnier' : (Files_s,Pos_s,Files_v,Pos_v)=List_Garnier(dirs,he)
 elif Case=='Sevault' : (Files_s,Pos_s,Files_v,Pos_v)=List_Sevault(dirs,flame)
-Npos_s=len(Pos_s) ; IPos_s=argsort(Pos_s)
-Npos_v=len(Pos_v) ; IPos_v=argsort(Pos_v)
+#===================================================================================
+util.Section( 'Inlet profile : {:.3f} s'.format(time.time()-t0),0,3,'b' )
+#===================================================================================
+if case in ['Jaravel','Garnier','Sevault'] :
+	Umax=Umoy*(n+2)/n ; print('=> n = %.0f  ,  Umoy = %.3f [m/s]  ,  Umax = %.3f [m/s]'%(n,Umoy,Umax))
+	Np=int(1e4)
+	VyV=linspace(0,0.5*D0,Np)
+	Uth=Umax*(1-(2*VyV/D0)**n)
+	Npos_s=len(Pos_s) ; IPos_s=argsort(Pos_s)
+	Npos_v=len(Pos_v) ; IPos_v=argsort(Pos_v)
+#===================================================================================
+if REPORT :
+	util.Section( 'Report reading : {:.3f} s'.format(time.time()-t0),1,5,'r' )
+	for rf in os.popen('ls %s/report-*-rfile.out'%(dirc)).read().splitlines() :
+		r_name=rf.split('/')[-1][7:-10]
+		Dr=fl.Report_read(rf) ; Keys=list(Dr.keys())
+		print('=> Reading report file : %s  ->  Keys : '%(r_name) , Keys )
+		figr,axr=plt.subplots(figsize=(10,7))
+		for k in Keys[1:] : axr.plot( Dr['Iteration'],Dr[k],label=k[7:] )
+		if len(Keys)>2 : axr.legend(fontsize=15) #,loc='center',bbox_to_anchor=(0.5,1.5))
+		util.SaveFig(figr,dirp+'Report-%s.pdf'%(r_name))
+	if ONLY : sys.exit('=> Stop after report reading')
 #===================================================================================
 if TEMP :
 	# dirp=dirc+'PLOT/'
@@ -118,7 +133,7 @@ if TEMP :
 	fl.Probe_plot(dirc+'probe-F.out',dirp+'Probe-F.pdf')
 	fl.Probe_plot(dirc+'probe-T.out',dirp+'Probe-T.pdf')
 	fl.Probe_plot(dirc+'probe-V.out',dirp+'Probe-V.pdf')
-	(D_in,D_ou)=fl.Report_read(dirc+'InletMassFlowRate.out',dirc+'outletMassFlowRate.out')
+	(D_in,D_ou)=fl.Mass_read(dirc+'InletMassFlowRate.out',dirc+'outletMassFlowRate.out')
 	It =D_in[:,0]
 	Min=D_in[:,1]+D_in[:,2]
 	Mou=D_ou[:,1]+D_ou[:,2]
@@ -157,9 +172,10 @@ if STRUCT :
 	# fl.Visu(dird+slice,'velocity-magnitude' ,r'Velocity [m/s]'        ,[0,0.3],[0,0.05],arange(0,350,50)    ,cmesh,[],(25,5),'cividis',dirp+'Struct-V.png',[])
 	# fl.Visu(dird+slice,'turb-kinetic-energy',r'k [$m^2/s^2$]'         ,[0,0.3],[0,0.05],arange(250,2500,250),cmesh,[],(25,5),'cividis',dirp+'Struct-K.png',[])
 	# fl.Visu(dird+slice,'turb-diss-rate'     ,r'$\epsilon$ [$m^2/s^3$]',[0,0.3],[0,0.05],arange(0,2e7,1e6)   ,cmesh,[],(25,5),'cividis',dirp+'Struct-E.png',[])
-	# fl.Visu(dird+slice,'tt'                 ,r'$1/t_t$ [$1/s$]'       ,[0,0.3],[0,0.05],logspace(1,4,5)     ,cmesh,[],(25,5),'cividis',dirp+'Struct-M.png',['Zst',[Zst,'b'],'MIXH',[fl.Mol_m,BC_f,BC_o],'Tiso',[1600,1800,2000]])
+	fl.Visu(dird+slice,'tc'                 ,r'$1/t_c$ [$1/s$]'       ,[0,0.3],[0,0.05],logspace(1,4,5)     ,cmesh,[],(25,5),'cividis',dirp+'Struct-tc.png',['Zst',[Zst,'b'],'MIXH',[fl.Mol_m,BC_f,BC_o],'Tiso',[1600,1800,2000]] )
+	# fl.Visu(dird+slice,'tt'                 ,r'$1/t_t$ [$1/s$]'       ,[0,0.3],[0,0.05],logspace(1,4,5)     ,cmesh,[],(25,5),'cividis',dirp+'Struct-tt.png',['Zst',[Zst,'b'],'MIXH',[fl.Mol_m,BC_f,BC_o],'Tiso',[1600,1800,2000],'tt',['dyn',4]] )
 	# fl.Visu(dird+slice,'mixH'               ,r'Mixture fraction [-]'  ,[0,0.3],[0,0.05],arange(0,1.1,0.1)   ,cmesh,[],(25,5),'viridis',dirp+'Struct-Z.png',['ISO',[Zst],'MIXH',[fl.Mol_m,BC_f,BC_o]])
-	fl.Visu(dird+slice,'temperature'        ,r'Temperature [K]'       ,[0,0.3],[0,0.05],arange(250,2500,250),cmesh,[],(25,5),'inferno',dirp+'Struct-T.png',['ISO',[2000],'RECIRC','b','Zst',[Zst,'b'],'MIXH',[fl.Mol_m,BC_f,BC_o]])
+	# fl.Visu(dird+slice,'temperature'        ,r'Temperature [K]'       ,[0,0.3],[0,0.05],arange(250,2500,250),cmesh,[],(25,5),'inferno',dirp+'Struct-T.png',['ISO',[2000],'RECIRC','b','Zst',[Zst,'b'],'MIXH',[fl.Mol_m,BC_f,BC_o]])
 	if ONLY : sys.exit('=> Stop after mixture fraction')
 #%%=================================================================================
 if VISU :
