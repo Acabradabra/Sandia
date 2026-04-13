@@ -1,10 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-#=====> Boudary conditions
-BC_f={'T':300 , 'V':98.2  , 'H2':0.55 , 'O2':0    ,'N2':0 , 'H2O':0 , 'CH4':0.45 , 'CO2':0    , 'unit':'X'} # 55p H2 , Re 15k
-BC_o={'T':300 , 'V':0.778 , 'H2':0    , 'O2':0.32 ,'N2':0 , 'H2O':0 , 'CH4':0    , 'CO2':0.68 , 'unit':'X'}
-
 #=====> Dimensions
 D0=  5e-3
 D1=  6e-3
@@ -14,29 +10,31 @@ Lc=1e-2
 
 ep=D1-D0
 
-#====================> Helium content 
-h2=55
-re=15
+#====================> Case
+flame='d'
 
-if   re==15 and h2==55 : flame='a' ; Umoy=98.2
-elif re==15 and h2==45 : flame='b' ; Umoy=84.5
-elif re==15 and h2==37 : flame='c' ; Umoy=75.8
-elif re==12 and h2==55 : flame='d' ; Umoy=78.6
-elif re==18 and h2==55 : flame='e' ; Umoy=117.8
+if   flame=='a' : re=15 ; h2=55  ; Umoy=98.2  ; Uox=0.778
+elif flame=='b' : re=15 ; h2=45  ; Umoy=84.5  ; Uox=0.755
+elif flame=='c' : re=15 ; h2=37  ; Umoy=75.8  ; Uox=0.739
+elif flame=='d' : re=12 ; h2=55  ; Umoy=78.6  ; Uox=0.622
+elif flame=='e' : re=18 ; h2=55  ; Umoy=117.8 ; Uox=0.933
+ch4=100-h2
+
+#=====> Boundary conditions
+BC_f={'T':300 , 'V':Umoy , 'H2':h2/100 , 'O2':0    ,'N2':0 , 'H2O':0 , 'CH4':ch4/100 , 'CO2':0    , 'unit':'X'}
+BC_o={'T':300 , 'V':Uox  , 'H2':0      , 'O2':0.32 ,'N2':0 , 'H2O':0 , 'CH4':0       , 'CO2':0.68 , 'unit':'X'}
 
 #====================> Directories
 dir0='/mnt/d/Python/Sandia/'
 dirs=dir0+'DATA-Oxy/Mean_RMS/'
-# dirc='/mnt/d/FLUENT/Sandia-Sevault/RUN-00-COLD/DUMP-05-Side/'
-# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP/'
-# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-09-P1-WSGG/'
-dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-00-55p-15k/DUMP-11-DO-4433/'
+# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-01-CADFEM/DUMP/'
+dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-01-CADFEM/DUMP-00-D-EDC/'
 dird=dirc+'DATA/'
 dirp=dirc+'PLOT/'
 slice='Data-all.dat'
 # slice='Data-all-Reac.dat'
 par=''
-par='DO-4433'
+# par='DO-4433'
 if par :
     slice='Data-%s.dat'%(par)
     dirp=dirc+'PLOT-%s/'%(par)

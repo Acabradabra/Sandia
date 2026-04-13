@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 
 #%%=================================================================================
-from unittest import case
-from IPython import get_ipython
+# from unittest import case
+# from IPython import get_ipython
 
-ip = get_ipython()
-if ip is not None:
-    ip.run_line_magic("load_ext", "autoreload")
-    ip.run_line_magic("autoreload", "2")
+# ip = get_ipython()
+# if ip is not None:
+#     ip.run_line_magic("load_ext", "autoreload")
+#     ip.run_line_magic("autoreload", "2")
 #%%=================================================================================
 #                     Modules
 #===================================================================================
@@ -21,6 +21,7 @@ if VEL   : VISU,SAVE=True,True
 if COMPA : SAVE,DATA=True,True
 
 from numpy import *
+from scipy.interpolate import interp1d
 import os
 import sys
 import csv
@@ -44,6 +45,7 @@ else : sys.exit('=> Error : Case not recognized')
 
 #====================> Fields
 # Vars=['Vel','k','T','mix']
+# Vars=['Xo2','Xco','Xco2','Xh2o','T']
 Vars=['Vel','k','T','o2','h2','ch4','co2','h2o','co']
 # Vars=['Vel','k','T','mixH','o2','h2','n2','h2o']
 # Vars=['T','o2','h2','ch4','co2','co']
@@ -129,15 +131,33 @@ if Case in ['Jaravel','Garnier','Sevault'] :
 #===================================================================================
 if REPORT :
 	util.Section( 'Report reading : {:.3f} s'.format(time.time()-t0),1,5,'r' )
+	# for rf in os.popen('ls %s/report-*-rfile.out'%(dirc)).read().splitlines() :
 	for rf in os.popen('ls %s/report-*-rfile.out'%(dirc)).read().splitlines() :
 		r_name=rf.split('/')[-1][7:-10]
-		Dr=fl.Report_read(rf) ; Keys=list(Dr.keys())
-		print('=> Reading report file : %s  ->  Keys : '%(r_name) , Keys )
-		figr,axr=plt.subplots(figsize=(10,7))
-		for k in Keys[1:] : axr.plot( Dr['Iteration'],Dr[k],label=k[7:] )
-		if len(Keys)>2 : axr.legend(fontsize=15) #,loc='center',bbox_to_anchor=(0.5,1.5))
-		if r_name in ['heat-release','mass-balance','shell-loss'] :
-			axr.ticklabel_format( axis='y' , scilimits=(-2,2) )
+		Dr=fl.Report_read(rf) ; Keys=list(Dr.keys()) #; print(Keys)
+		if '(' in Keys[1] : Labels=['Iteration']+[ k.split('(')[1][:-1] for k in Keys[1:] if '(' in k ]
+		else              : Labels=Keys
+		print('=> \033[31m%s\033[0m : '%(r_name) , Labels )
+		figr,axr=plt.subplots(figsize=(10,7)) #; bxr=axr.twinx()
+		if r_name == 'mass-balance' :
+			# (Mf_f,Mf_o,Mf_b,Mf_s,Mb)=fl.Mf_sep(Dr,Keys) ; print('=> fuel : %.3f g/s  ,  oxid : %.3f g/s  ,  out : %.3f g/s  ,  slope : %.3f g/s  ,  balance : %.3f g/s'%(mean(Mf_f)*1e3,mean(Mf_o)*1e3,mean(Mf_b)*1e3,mean(Mf_s)*1e3,mean(Mb)*1e3))
+			(Mf_f,Mf_o,Mf_b,Mf_l,Mf_s,Mb)=fl.Mf_sep2(Dr,Keys)
+			print('=> fuel : %.3f g/s  ,  oxid : %.3f g/s  ,  out : %.3f g/s  ,   leak : %.3f g/s  ,  slope : %.3f g/s  ,  balance : %.3f g/s'%(mean(Mf_f[-1])*1e3,mean(Mf_o[-1])*1e3,mean(Mf_b[-1])*1e3,mean(Mf_f[-1])*1e3,mean(Mf_s[-1])*1e3,mean(Mb[-1])*1e3))
+			axr.plot( Dr['Iteration'],1e3*Mf_f  ,label='inlet-fuel'  )
+			axr.plot( Dr['Iteration'],1e3*Mf_o  ,label='inlet-oxid'  )
+			axr.plot( Dr['Iteration'],1e3*Mf_b  ,label='outlet'      )
+			axr.plot( Dr['Iteration'],1e3*Mf_l  ,label='leak'        )			
+			axr.plot( Dr['Iteration'],1e3*Mf_s  ,label='slope-zone'  )			
+			# bxr.plot( Dr['Iteration'],1e3*Mb,'k',label='mass-balance')
+			axr.plot( Dr['Iteration'],1e3*Mb,'k',label='mass-balance')
+			axr.set_ylabel('Mass flow rate [g/s]',fontsize=25)
+			figr.legend(fontsize=15,loc='center',bbox_to_anchor=(0.7,0.3))
+		else :
+			for n,k in enumerate(Keys[1:]) : axr.plot( Dr['Iteration'],Dr[k],label=Labels[n+1] )
+			if len(Keys)>2 : axr.legend(fontsize=15) #,loc='center',bbox_to_anchor=(0.7,0.3))
+		# if len(Keys)>2 : figr.legend(fontsize=15,loc='center',bbox_to_anchor=(0.7,0.3))
+		if r_name in ['heat-release','mass-balance','shell-loss','co2'] :
+			axr.ticklabel_format( axis='y' , scilimits=(-3,3) )
 		util.SaveFig(figr,dirp+'Report-%s.pdf'%(r_name))
 	if ONLY : sys.exit('=> Stop after report reading')
 #===================================================================================
@@ -196,7 +216,7 @@ if VISU :
 	BD_Vars={}
 	Ticks={}
 	Titre={}
-	Param={}
+	Param={'co':[] ,'o2':[] ,'h2':[] ,'ch4':[],'co2':[],'h2o':[],'T':[]}
 	util.Section( 'Visualisation : {:.3f} s'.format(time.time()-t0),1,5,'r' )
 	name0='Visu-'
 	if Case=='Garnier' :
@@ -216,6 +236,9 @@ if VISU :
 		fsize=(25,5)
 		BD_Vars['T' ]=[]
 		BD_Vars['co']=[]
+		BD_Vars['o2']=[]
+		BD_Vars['co2']=[]
+		BD_Vars['h2o']=[]
 		Ticks['T'  ]=arange(250,3001,250)
 		Ticks['co' ]=arange(0,1.1,0.1)
 		Ticks['o2' ]=arange(0,1.1,0.1)
@@ -234,7 +257,10 @@ if VISU :
 		Tiso=[2000,2500,3000]
 		fsize=(15,7)
 		BD_Vars['T' ]=[300,3150]
-		BD_Vars['co']=[0,0.25]
+		BD_Vars['co']=[] #0,0.25]
+		BD_Vars['o2']=[]
+		BD_Vars['co2']=[]
+		BD_Vars['h2o']=[]
 		Ticks['T' ]=arange(250,3001,250)
 		Ticks['co']=arange(0,1.1,0.02)
 		Ticks['o2']=arange(0,1.1,0.1)
@@ -248,26 +274,36 @@ if VISU :
 		Titre['ch4']='Y CH4 [-]'
 		Titre['co2']='Y CO2 [-]'
 		Titre['h2o']='Y H2O [-]'
+		Param['T']+=['Probe',[Pos_p,ray_p,Txt_p]]
+		# Param['co2']=['Talus',[1.494,0.974]]
+		Param['Vel']=['QUIV',[1e-1,1e-1,300]]
 		if OUTLET : 
 			slice_m=slice_f=slice_o
 			name0+='OUT-'
 			Tiso=[]
 			fsize=(7,7)
-			BD_Vars['T' ]=[]
-			BD_Vars['co']=[]
-			Ticks['T' ]=[]
-			Ticks['co']=[]
-			Ticks['o2']=[]
+			BD_Vars['T'  ]=[] #[1690,1745]
+			BD_Vars['co' ]=[] #[0,450]
+			BD_Vars['o2' ]=[] #[0,3]
+			BD_Vars['co2']=[] #[27.5,30.5]
+			BD_Vars['h2o']=[] #[67.5,71.5]
+			Ticks['T' ]=[] #arange(1690,1751,10)
+			Ticks['co']=[] #arange(0,451,50)
+			Ticks['o2']=[] #arange(0,3.1,0.5)
 			Ticks['h2']=[]
 			Ticks['ch4']=[]
-			Ticks['co2']=[]
-			Ticks['h2o']=[]
+			Ticks['co2']=[] #arange(27.5,30.6,0.5)
+			Ticks['h2o']=[] #arange(67.5,71.6,0.5)
 			Titre['co']='Y CO [ppm]'
 			Titre['o2']='Y O2 [%]'
 			Titre['h2']='Y H2 [ppm]'
 			Titre['ch4']='Y CH4 [ppm]'
 			Titre['co2']='Y CO2 [%]'
 			Titre['h2o']='Y H2O [%]'
+			Titre['Xo2']='X O2 [%]'
+			Titre['Xco']='X CO [ppm]'
+			Titre['Xco2']='X CO2 [%]'
+			Titre['Xh2o']='X H2O [%]'
 			Param['co' ]=['GAIN',1e6]
 			Param['o2' ]=['GAIN',1e2]
 			Param['h2' ]=['GAIN',1e6]
@@ -276,19 +312,23 @@ if VISU :
 			Param['h2o']=['GAIN',1e2]
 	if ZOOM : name0+='Zoom-'
 	F_int={}
-	if 'T'    in Vars : F_int['T'   ]=fl.Visu(dird+slice_m,'temperature'        ,'Temperature [K]'     ,RX_t,RY_t,Ticks['T']          ,cmesh,BD_Vars['T'] ,fsize,'inferno',dirp+name0+'Temperature.png',['INTERP','LINES',Vp_s,'ISO',Tiso]+Param['T'])
-	if 'Vel'  in Vars : F_int['Vel' ]=fl.Visu(dird+slice_f,'velocity-magnitude' ,'Velocity [m/s]'      ,RX_d,RY_d,arange(0,350,50)    ,cmesh,[]           ,fsize,'cividis',dirp+name0+'Velocity.png'   ,['INTERP','LINES',Vp_v])
-	if 'k'    in Vars : F_int['k'   ]=fl.Visu(dird+slice_f,'turb-kinetic-energy','k [$m^2/s^2$]'       ,RX_d,RY_d,arange(250,2500,250),cmesh,[]           ,fsize,'cividis',dirp+name0+'TKE.png'        ,['INTERP'])
-	if 'tt'   in Vars : F_int['tt'  ]=fl.Visu(dird+slice_f,'tt'                 ,'tt [s]'              ,RX_d,RY_d,arange(0,1e-3,1e-4) ,cmesh,[]           ,fsize,'cividis',dirp+name0+'tt.png'         ,['INTERP'])
-	if 'mixH' in Vars : F_int['mixH']=fl.Visu(dird+slice_f,'mixH'               ,'Mixture fraction [-]',RX_t,RY_t,arange(0,1.1,0.1  ) ,cmesh,[]           ,fsize,'viridis',dirp+name0+'Mix.png'        ,['INTERP','MIXH',[fl.Mol_m,BC_f,BC_o]])
-	if 'mix'  in Vars : F_int['mix' ]=fl.Visu(dird+slice_f,'fmean'              ,'Mixture fraction [-]',RX_t,RY_t,arange(0,1.1,0.1  ) ,cmesh,[]           ,fsize,'viridis',dirp+name0+'Fmean.png'      ,['INTERP'])
-	if 'h2'   in Vars : F_int['h2'  ]=fl.Visu(dird+slice_f,'h2'                 ,Titre['h2']           ,RX_t,RY_t,Ticks['h2']         ,cmesh,[]           ,fsize,'viridis',dirp+name0+'H2.png'         ,['INTERP']+Param['h2'])
-	if 'n2'   in Vars : F_int['n2'  ]=fl.Visu(dird+slice_f,'n2'                 ,'Y N2 [-]'            ,RX_t,RY_t,arange(0,1.1,0.1  ) ,cmesh,[]           ,fsize,'viridis',dirp+name0+'N2.png'         ,['INTERP'])
-	if 'o2'   in Vars : F_int['o2'  ]=fl.Visu(dird+slice_f,'o2'                 ,Titre['o2']           ,RX_t,RY_t,Ticks['o2']         ,cmesh,[]           ,fsize,'viridis',dirp+name0+'O2.png'         ,['INTERP']+Param['o2'])
-	if 'co'   in Vars : F_int['co'  ]=fl.Visu(dird+slice_f,'co'                 ,Titre['co']           ,RX_t,RY_t,Ticks['co']         ,cmesh,BD_Vars['co'],fsize,'viridis',dirp+name0+'CO.png'         ,['INTERP']+Param['co'])
-	if 'ch4'  in Vars : F_int['ch4' ]=fl.Visu(dird+slice_f,'ch4'                ,Titre['ch4']          ,RX_t,RY_t,Ticks['ch4']        ,cmesh,[]           ,fsize,'viridis',dirp+name0+'CH4.png'        ,['INTERP']+Param['ch4'])
-	if 'h2o'  in Vars : F_int['h2o' ]=fl.Visu(dird+slice_f,'h2o'                ,Titre['h2o']          ,RX_t,RY_t,Ticks['h2o']        ,cmesh,[]           ,fsize,'viridis',dirp+name0+'H2O.png'        ,['INTERP']+Param['h2o'])
-	if 'co2'  in Vars : F_int['co2' ]=fl.Visu(dird+slice_f,'co2'                ,Titre['co2']          ,RX_t,RY_t,Ticks['co2']        ,cmesh,[]           ,fsize,'viridis',dirp+name0+'CO2.png'        ,['INTERP']+Param['co2'])
+	if 'T'    in Vars : F_int['T'   ]=fl.Visu(dird+slice_m,'xy','temperature'        ,'Temperature [K]'     ,RX_t,RY_t,Ticks['T']          ,cmesh,BD_Vars['T']  ,fsize,'inferno',dirp+name0+'Temperature.png',['INTERP','LINES',Vp_s,'ISO',Tiso]+Param['T']  )
+	if 'Vel'  in Vars : F_int['Vel' ]=fl.Visu(dird+slice_f,'xy','velocity-magnitude' ,'Velocity [m/s]'      ,RX_d,RY_d,arange(0,350,50)    ,cmesh,[]            ,fsize,'cividis',dirp+name0+'Velocity.png'   ,['INTERP','LINES',Vp_v]           +Param['Vel'])
+	if 'k'    in Vars : F_int['k'   ]=fl.Visu(dird+slice_f,'xy','turb-kinetic-energy','k [$m^2/s^2$]'       ,RX_d,RY_d,arange(250,2500,250),cmesh,[]            ,fsize,'cividis',dirp+name0+'TKE.png'        ,['INTERP'])
+	if 'tt'   in Vars : F_int['tt'  ]=fl.Visu(dird+slice_f,'xy','tt'                 ,'tt [s]'              ,RX_d,RY_d,arange(0,1e-3,1e-4) ,cmesh,[]            ,fsize,'cividis',dirp+name0+'tt.png'         ,['INTERP'])
+	if 'mixH' in Vars : F_int['mixH']=fl.Visu(dird+slice_f,'xy','mixH'               ,'Mixture fraction [-]',RX_t,RY_t,arange(0,1.1,0.1  ) ,cmesh,[]            ,fsize,'viridis',dirp+name0+'Mix.png'        ,['INTERP','MIXH',[fl.Mol_m,BC_f,BC_o]])
+	if 'mix'  in Vars : F_int['mix' ]=fl.Visu(dird+slice_f,'xy','fmean'              ,'Mixture fraction [-]',RX_t,RY_t,arange(0,1.1,0.1  ) ,cmesh,[]            ,fsize,'viridis',dirp+name0+'Fmean.png'      ,['INTERP'])
+	if 'h2'   in Vars : F_int['h2'  ]=fl.Visu(dird+slice_f,'xy','h2'                 ,Titre['h2']           ,RX_t,RY_t,Ticks['h2']         ,cmesh,[]            ,fsize,'viridis',dirp+name0+'H2.png'         ,['INTERP']+Param['h2'])
+	if 'n2'   in Vars : F_int['n2'  ]=fl.Visu(dird+slice_f,'xy','n2'                 ,'Y N2 [-]'            ,RX_t,RY_t,arange(0,1.1,0.1  ) ,cmesh,[]            ,fsize,'viridis',dirp+name0+'N2.png'         ,['INTERP'])
+	if 'o2'   in Vars : F_int['o2'  ]=fl.Visu(dird+slice_f,'xy','o2'                 ,Titre['o2']           ,RX_t,RY_t,Ticks['o2']         ,cmesh,BD_Vars['o2'] ,fsize,'viridis',dirp+name0+'O2.png'         ,['INTERP']+Param['o2'])
+	if 'co'   in Vars : F_int['co'  ]=fl.Visu(dird+slice_f,'xy','co'                 ,Titre['co']           ,RX_t,RY_t,Ticks['co']         ,cmesh,BD_Vars['co'] ,fsize,'viridis',dirp+name0+'CO.png'         ,['INTERP']+Param['co'])
+	if 'ch4'  in Vars : F_int['ch4' ]=fl.Visu(dird+slice_f,'xy','ch4'                ,Titre['ch4']          ,RX_t,RY_t,Ticks['ch4']        ,cmesh,[]            ,fsize,'viridis',dirp+name0+'CH4.png'        ,['INTERP']+Param['ch4'])
+	if 'h2o'  in Vars : F_int['h2o' ]=fl.Visu(dird+slice_f,'xy','h2o'                ,Titre['h2o']          ,RX_t,RY_t,Ticks['h2o']        ,cmesh,BD_Vars['h2o'],fsize,'viridis',dirp+name0+'H2O.png'        ,['INTERP']+Param['h2o'])
+	if 'co2'  in Vars : F_int['co2' ]=fl.Visu(dird+slice_f,'xy','co2'                ,Titre['co2']          ,RX_t,RY_t,Ticks['co2']        ,cmesh,BD_Vars['co2'],fsize,'viridis',dirp+name0+'CO2.png'        ,['INTERP']+Param['co2'])
+	if 'Xo2'  in Vars : F_int['Xo2' ]=fl.Visu(dird+slice_f,'xy','molef-o2'           ,Titre['Xo2']          ,RX_t,RY_t,Ticks['o2']         ,cmesh,BD_Vars['o2'] ,fsize,'viridis',dirp+name0+'XO2.png'        ,['INTERP']+Param['o2'])
+	if 'Xco'  in Vars : F_int['Xco' ]=fl.Visu(dird+slice_f,'xy','molef-co'           ,Titre['Xco']          ,RX_t,RY_t,Ticks['co']         ,cmesh,BD_Vars['co'] ,fsize,'viridis',dirp+name0+'XCO.png'        ,['INTERP']+Param['co'])
+	if 'Xco2' in Vars : F_int['Xco2']=fl.Visu(dird+slice_f,'xy','molef-co2'          ,Titre['Xco2']         ,RX_t,RY_t,Ticks['co2']        ,cmesh,BD_Vars['co2'],fsize,'viridis',dirp+name0+'XCO2.png'       ,['INTERP']+Param['co2'])
+	if 'Xh2o' in Vars : F_int['Xh2o']=fl.Visu(dird+slice_f,'xy','molef-h2o'          ,Titre['Xh2o']         ,RX_t,RY_t,Ticks['h2o']        ,cmesh,BD_Vars['h2o'],fsize,'viridis',dirp+name0+'XH2O.png'       ,['INTERP']+Param['h2o'])
 
 	if not NOPROF :
 		D_int={}
@@ -462,6 +502,7 @@ for n,p in enumerate(IPos_s) :
 
 if COMPA :
 	dirp=dirc+'PLOT/'
+	# D_compa=[ d for d in os.listdir(dirc) if d[:5]=='PLOT-' ]
 	D_compa=[ d for d in os.listdir(dirc) if d[:5]=='PLOT-' ]
 	D_compa.sort()
 	for d in D_compa :
