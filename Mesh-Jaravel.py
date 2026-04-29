@@ -16,7 +16,7 @@ import meshio as mo
 import matplotlib.pyplot as plt
 import matplotlib
 
-from Params import *
+from ParamsJaravel import *
 
 t0=time.time()
 #===================================================================================
