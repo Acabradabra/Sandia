@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+flame='e'
+
 #=====> Dimensions
 D0=  5e-3
 D1=  6e-3
@@ -10,9 +12,23 @@ Lc=1e-2
 
 ep=D1-D0
 
-#====================> Case
-flame='d'
+#====================> Directories IN
+dir0='/mnt/beegfs/ZEUS/'
+dirs=dir0+'Python/Sandia/DATA-Oxy/Mean_RMS/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-00-A-EDC/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-01-A-Dyn/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-02-B-EDC/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-00-D-EDC/'
+dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-02-C-EDC/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-02-EDM/DUMP/'
+if   '-A-' in dirc : flame='a'
+elif '-B-' in dirc : flame='b'
+elif '-C-' in dirc : flame='c'
+elif '-D-' in dirc : flame='d'
+elif '-E-' in dirc : flame='e'
 
+#====================> Case
 if   flame=='a' : re=15 ; h2=55  ; Umoy=98.2  ; Uox=0.778
 elif flame=='b' : re=15 ; h2=45  ; Umoy=84.5  ; Uox=0.755
 elif flame=='c' : re=15 ; h2=37  ; Umoy=75.8  ; Uox=0.739
@@ -24,23 +40,15 @@ ch4=100-h2
 BC_f={'T':300 , 'V':Umoy , 'H2':h2/100 , 'O2':0    ,'N2':0 , 'H2O':0 , 'CH4':ch4/100 , 'CO2':0    , 'unit':'X'}
 BC_o={'T':300 , 'V':Uox  , 'H2':0      , 'O2':0.32 ,'N2':0 , 'H2O':0 , 'CH4':0       , 'CO2':0.68 , 'unit':'X'}
 
-#====================> Directories
-dir0='/mnt/d/Python/Sandia/'
-dirs=dir0+'DATA-Oxy/Mean_RMS/'
-# dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-01-CADFEM/DUMP/'
-dirc='/mnt/scratch/ZEUS/FLUENT/Sandia-Sevault/RUN-01-CADFEM/DUMP-00-D-EDC/'
+
+#====================> Directories OUT
 dird=dirc+'DATA/'
 dirp=dirc+'PLOT/'
 slice='Data-all.dat'
-# slice='Data-all-Reac.dat'
 par=''
-# par='DO-4433'
 if par :
     slice='Data-%s.dat'%(par)
     dirp=dirc+'PLOT-%s/'%(par)
-
-# D_compa=[
-# ]
 
 #====================> Variables
 Vars_TNF=[
@@ -68,7 +76,8 @@ Vars_TNF=[
 Cor={
 # 'r'   :'xmm'  ,
 'r'   :'shot'  ,
-'T'   :'Tray' ,
+# 'T'   :'Tray' ,
+'T'   :'Tpg' ,
 'Tpg' :'Tpg'  ,
 'Rho' :'dens' ,
 'mix' :'phi'  ,

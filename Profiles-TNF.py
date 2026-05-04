@@ -33,8 +33,9 @@ t0=time.time()
 #%%=================================================================================
 #                     Parameters
 #===================================================================================
-cmesh=0 
-# cmesh=1e3
+# cmesh=0 
+cmesh=1e3
+type='svg'
 
 #====================> Burner
 if   Case=='Jaravel' : from ParamsJaravel import * ; title=''
@@ -44,38 +45,48 @@ elif Case=='PRECIZE' : from ParamsPRECIZE import * ; title='PRECIZE'
 else : sys.exit('=> Error : Case not recognized')
 
 #====================> Fields
-# Vars=['Vel','k','T','mix']
-# Vars=['Xo2','Xco','Xco2','Xh2o','T']
-Vars=['Vel','k','T','o2','h2','ch4','co2','h2o','co']
+Vars=['T','o2','ch4','co2','h2o','co','h2']
+# Vars=['Vel','k','T','o2','ch4','co2','h2o','co','h2']
+# Vars=['Vel','k','T','o2','ch4','co2','h2o','co']
 # Vars=['Vel','k','T','mixH','o2','h2','n2','h2o']
-# Vars=['T','o2','h2','ch4','co2','co']
-# Vars=['Vel','T','o2','h2']
-# Vars=['Vel','k','tt']
-# Vars=['Vel','k']
-# Vars=['Vel']
 # Vars=['T']
-# Vars=['co2']
+
+#====================> Params
+Titre={}
+Titre['T'  ]='Temperature [K]'
+Titre['Vel']='Velocity [m/s]'
+Titre['k'  ]=r'k [$m^2/s^2$]'
+Titre['co' ]=r'$Y_{CO}$ [%]'
+Titre['o2' ]=r'$Y_{O_2}$ [-]'
+Titre['n2' ]=r'$Y_{N_2}$ [-]'
+Titre['h2' ]=r'$Y_{H_2}$ [-]'
+Titre['ch4']=r'$Y_{CH_4}$ [-]'
+Titre['co2']=r'$Y_{CO_2}$ [-]'
+Titre['h2o']=r'$Y_{H_2O}$ [-]'
 
 #====================> Visu domain
-if Case=='PRECIZE' and ZOOM :
-	RY_t=[0.5,1.1]
-	RX_t=[2.8,3.8]
-	RY_d=RY_t
-	RX_d=RX_t
-elif Case=='PRECIZE' and VISU :
-	RY_t=[]
-	RX_t=[]
-	RY_d=[]
-	RX_d=[]	
-elif ZOOM :
-	RY_t=[ 0,0.010]
-	RX_t=[ 0,0.025]
-	RY_d=[ 0,0.010]
-	RX_d=[ 0,0.025]
-elif VISU :
-	RY_t=[ 0,0.10]
-	RX_t=[Lc,0.50]
+if   Case=='Jaravel' and dirc.split('/')[-2]=='DUMP-01-EDM' :
+	fsize=(15,5)
+	RY_d=RY_t=[ 0,0.014]
+	RX_d=RX_t=[ 0,0.050]
+elif Case=='Jaravel' and 'EDC' in dirc.split('/')[-2] :
+	fsize=(25,4)
+	RY_d=RY_t=[  0,0.05]
+	RX_d=RX_t=[ Lc,0.40]
+elif Case=='Sevault' and ZOOM :
+	fsize=(25,5)
+	RY_d=RY_t=[ 0,0.08]
+	RX_d=RX_t=[ 0,0.40]
+elif Case=='Sevault' :
+	fsize=(25,5)
+	RY_d=RY_t=[  0,0.08]
+	RX_d=RX_t=[  0,0.80]
+else :
+	fsize=(25,5)
+	# RX_t=[Lc,0.50]
+	RY_t=[ 0,0.05]
 	RY_d=[ 0,0.04]
+	RX_t=[ 0,0.40]
 	RX_d=[ 0,0.2 ]
 
 #====================> Velocity profile
@@ -89,6 +100,28 @@ util.Entete1(104,[dirc,title],'Profiles TNF')
 #===================================================================================
 util.MKDIR(dirp)
 #===================================================================================
+def List_Jaravel(dirs,flame) :
+	# lim=8
+	lim=1e5
+	Files_s=os.popen('ls %s/pmCDEF/pm%s.stat/*.Yfav'%(dirs,flame)).read().splitlines()
+	Files_v=os.popen('ls %s/TUD_LDV_DEF/TUD_LDV_%s.*'%(dirs,flame)).read().splitlines()
+	Pos_s=[] ; F_s=[] ; A_s=[]
+	Pos_v=[] ; F_v=[] ; A_v=[]
+	#====================> Positions Scattering
+	for f in Files_s :
+		pos0=f.split('/')[-1].split('.')[0][1:] #; print(pos0)
+		if   pos0[:2]=='CL'  : A_s.append(f)
+		elif pos0    =='075' : F_s.append(f) ; Pos_s.append( 7.5 )
+		elif int(pos0) <lim  : F_s.append(f) ; Pos_s.append( int(pos0) )
+	#====================> Positions Velocimetry
+	for f in Files_v :
+		pos0=f.split('/')[-1].split('.')[-1] #; print(pos0)
+		if   pos0=='exit'      : pass
+		elif pos0=='axial'     : A_v.append(f)
+		elif pos0[1:]=='075'   : F_v.append(f) ; Pos_v.append( 7.5 )
+		elif int(pos0[1:])<lim : F_v.append(f) ; Pos_v.append( int(pos0[1:]) )
+	return(F_s+A_s,Pos_s,F_v+A_v,Pos_v)
+#-----------------------------------------------------------------------------------
 def List_Garnier(dirs,he) :
 	#====================> Positions Scattering
 	Files_s=os.popen('ls %s/he%.0f*.fav'%(dirs,he*10)).read().splitlines()
@@ -116,7 +149,7 @@ def List_Sevault(dirs,f) :
 #===================================================================================
 util.Section( 'TNF reading : {:.3f} s'.format(time.time()-t0),0,3,'b' )
 #===================================================================================
-if   Case=='Jaravel' : sys.exit('=> Error : Jaravel case not implemented yet')
+if   Case=='Jaravel' : (Files_s,Pos_s,Files_v,Pos_v)=List_Jaravel(dirs,flame)
 elif Case=='Garnier' : (Files_s,Pos_s,Files_v,Pos_v)=List_Garnier(dirs,he)
 elif Case=='Sevault' : (Files_s,Pos_s,Files_v,Pos_v)=List_Sevault(dirs,flame)
 #===================================================================================
@@ -162,11 +195,10 @@ if REPORT :
 	if ONLY : sys.exit('=> Stop after report reading')
 #===================================================================================
 if TEMP :
-	# dirp=dirc+'PLOT/'
 	util.Section( 'Temporals : {:.3f} s'.format(time.time()-t0),1,5,'r' )
-	fl.Probe_plot(dirc+'probe-F.out',dirp+'Probe-F.pdf')
-	fl.Probe_plot(dirc+'probe-T.out',dirp+'Probe-T.pdf')
-	fl.Probe_plot(dirc+'probe-V.out',dirp+'Probe-V.pdf')
+	for v in ['F','T','U'] : 
+		f_temp=dirc+f'probe-{v:s}.out'
+		if os.path.exists(f_temp) : fl.Probe_plot(f_temp,dirp+f'Probe-{v:s}.pdf')
 	(D_in,D_ou)=fl.Mass_read(dirc+'InletMassFlowRate.out',dirc+'outletMassFlowRate.out')
 	It =D_in[:,0]
 	Min=D_in[:,1]+D_in[:,2]
@@ -213,32 +245,42 @@ if STRUCT :
 	if ONLY : sys.exit('=> Stop after mixture fraction')
 #%%=================================================================================
 if VISU :
+	slice_m=slice_f=slice
 	BD_Vars={}
 	Ticks={}
-	Titre={}
-	Param={'co':[] ,'o2':[] ,'h2':[] ,'ch4':[],'co2':[],'h2o':[],'T':[]}
+	Param={'co':[] ,'o2':[] ,'h2':[] ,'ch4':[],'co2':[],'h2o':[],'T':[],'Vel':[]}
 	util.Section( 'Visualisation : {:.3f} s'.format(time.time()-t0),1,5,'r' )
 	name0='Visu-'
+	#=========================> Positions
 	if Case=='Garnier' :
 		Vp_v=[ Lc+n*D0*Ld for n in Pos_v ]
 		Vp_s=[ Lc+n*D0*Ld for n in Pos_s ]
+		Vp_h=[]
 	elif Case=='Sevault' :
 		Vp_v=[ Lc+z*1e-3       for z in Pos_s ]
 		Vp_s=[ Lc+z*1e-3       for z in Pos_s ]
+		Vp_h=[]
+	elif Case=='Jaravel' :
+		Vp_v=[ Lc+n*D0 for n in Pos_v ]
+		Vp_s=[ Lc+n*D0 for n in Pos_s ]
+		Vp_h=linspace(Lc,80*D0,1000)
 	elif Case=='PRECIZE' :
 		Vp_v=[]
 		Vp_s=[]
+	#=========================> Struct
 	if STRUCT : Param['T']=['MIX',[fl.Mol_m,BC_f,BC_o]]
 	else      : Param['T']=[]
-	if   Case in ['Garnier','Sevault'] : 
+	#=========================> Params
+	if   Case in ['Garnier','Sevault','Jaravel'] : 
 		Tiso=list(array([1600,1800])-0)
 		Param['T']+=['RECIRC','b']
-		fsize=(25,5)
+		Param['co']=['CO',1e2]
 		BD_Vars['T' ]=[]
 		BD_Vars['co']=[]
 		BD_Vars['o2']=[]
 		BD_Vars['co2']=[]
 		BD_Vars['h2o']=[]
+		BD_Vars['k'  ]=[]
 		Ticks['T'  ]=arange(250,3001,250)
 		Ticks['co' ]=arange(0,1.1,0.1)
 		Ticks['o2' ]=arange(0,1.1,0.1)
@@ -246,80 +288,26 @@ if VISU :
 		Ticks['ch4']=arange(0,1.1,0.1)
 		Ticks['co2']=arange(0,1.1,0.1)
 		Ticks['h2o']=arange(0,1.1,0.1)
-		Titre['co']='Y CO [-]'
-		Titre['o2']='Y O2 [-]'
-		Titre['h2']='Y H2 [-]'
-		Titre['ch4']='Y CH4 [-]'
-		Titre['co2']='Y CO2 [-]'
-		Titre['h2o']='Y H2O [-]'
+		Ticks['k'  ]=arange(250,2500,250)
 		slice_m=slice_f=slice
-	elif Case=='PRECIZE' : 
-		Tiso=[2000,2500,3000]
-		fsize=(15,7)
-		BD_Vars['T' ]=[300,3150]
-		BD_Vars['co']=[] #0,0.25]
-		BD_Vars['o2']=[]
-		BD_Vars['co2']=[]
-		BD_Vars['h2o']=[]
-		Ticks['T' ]=arange(250,3001,250)
-		Ticks['co']=arange(0,1.1,0.02)
-		Ticks['o2']=arange(0,1.1,0.1)
-		Ticks['h2' ]=arange(0,1.1,0.1)
-		Ticks['ch4']=arange(0,1.1,0.1)
-		Ticks['co2']=arange(0,1.1,0.1)
-		Ticks['h2o']=arange(0,1.1,0.1)
-		Titre['co']='Y CO [-]'
-		Titre['o2']='Y O2 [-]'
-		Titre['h2']='Y H2 [-]'
-		Titre['ch4']='Y CH4 [-]'
-		Titre['co2']='Y CO2 [-]'
-		Titre['h2o']='Y H2O [-]'
-		Param['T']+=['Probe',[Pos_p,ray_p,Txt_p]]
-		# Param['co2']=['Talus',[1.494,0.974]]
-		Param['Vel']=['QUIV',[1e-1,1e-1,300]]
-		if OUTLET : 
-			slice_m=slice_f=slice_o
-			name0+='OUT-'
-			Tiso=[]
-			fsize=(7,7)
-			BD_Vars['T'  ]=[] #[1690,1745]
-			BD_Vars['co' ]=[] #[0,450]
-			BD_Vars['o2' ]=[] #[0,3]
-			BD_Vars['co2']=[] #[27.5,30.5]
-			BD_Vars['h2o']=[] #[67.5,71.5]
-			Ticks['T' ]=[] #arange(1690,1751,10)
-			Ticks['co']=[] #arange(0,451,50)
-			Ticks['o2']=[] #arange(0,3.1,0.5)
-			Ticks['h2']=[]
-			Ticks['ch4']=[]
-			Ticks['co2']=[] #arange(27.5,30.6,0.5)
-			Ticks['h2o']=[] #arange(67.5,71.6,0.5)
-			Titre['co']='Y CO [ppm]'
-			Titre['o2']='Y O2 [%]'
-			Titre['h2']='Y H2 [ppm]'
-			Titre['ch4']='Y CH4 [ppm]'
-			Titre['co2']='Y CO2 [%]'
-			Titre['h2o']='Y H2O [%]'
-			Titre['Xo2']='X O2 [%]'
-			Titre['Xco']='X CO [ppm]'
-			Titre['Xco2']='X CO2 [%]'
-			Titre['Xh2o']='X H2O [%]'
-			Param['co' ]=['GAIN',1e6]
-			Param['o2' ]=['GAIN',1e2]
-			Param['h2' ]=['GAIN',1e6]
-			Param['ch4']=['GAIN',1e6]
-			Param['co2']=['GAIN',1e2]
-			Param['h2o']=['GAIN',1e2]
+		if   Case=='Jaravel' :
+			Ticks['o2' ]=arange(0,0.25,0.02)
+			Ticks['ch4']=arange(0,0.2 ,0.02)
+			Ticks['k'  ]=arange(0,100,10)
+			Ticks['co' ]=arange(0,10,1)
+			BD_Vars['k'  ]=[Ticks['k'][0],Ticks['k'][-1]]
+		elif Case=='Sevault' :
+			Ticks['co' ]=arange(0,50,2)
 	if ZOOM : name0+='Zoom-'
 	F_int={}
-	if 'T'    in Vars : F_int['T'   ]=fl.Visu(dird+slice_m,'xy','temperature'        ,'Temperature [K]'     ,RX_t,RY_t,Ticks['T']          ,cmesh,BD_Vars['T']  ,fsize,'inferno',dirp+name0+'Temperature.png',['INTERP','LINES',Vp_s,'ISO',Tiso]+Param['T']  )
-	if 'Vel'  in Vars : F_int['Vel' ]=fl.Visu(dird+slice_f,'xy','velocity-magnitude' ,'Velocity [m/s]'      ,RX_d,RY_d,arange(0,350,50)    ,cmesh,[]            ,fsize,'cividis',dirp+name0+'Velocity.png'   ,['INTERP','LINES',Vp_v]           +Param['Vel'])
-	if 'k'    in Vars : F_int['k'   ]=fl.Visu(dird+slice_f,'xy','turb-kinetic-energy','k [$m^2/s^2$]'       ,RX_d,RY_d,arange(250,2500,250),cmesh,[]            ,fsize,'cividis',dirp+name0+'TKE.png'        ,['INTERP'])
+	if 'T'    in Vars : F_int['T'   ]=fl.Visu(dird+slice_m,'xy','temperature'        ,Titre['T' ]           ,RX_t,RY_t,Ticks['T']          ,cmesh,BD_Vars['T']  ,fsize,'inferno',dirp+name0+'Temperature.png',['INTERP','LINES',Vp_s,'ISO',Tiso]+Param['T']  )
+	if 'Vel'  in Vars : F_int['Vel' ]=fl.Visu(dird+slice_f,'xy','velocity-magnitude' ,Titre['Vel']          ,RX_d,RY_d,arange(0,350,50)    ,cmesh,[]            ,fsize,'cividis',dirp+name0+'Velocity.png'   ,['INTERP','LINES',Vp_v]           +Param['Vel'])
+	if 'k'    in Vars : F_int['k'   ]=fl.Visu(dird+slice_f,'xy','turb-kinetic-energy',Titre['k'  ]          ,RX_d,RY_d,Ticks['k']          ,cmesh,BD_Vars['k']  ,fsize,'cividis',dirp+name0+'TKE.png'        ,['INTERP'])
 	if 'tt'   in Vars : F_int['tt'  ]=fl.Visu(dird+slice_f,'xy','tt'                 ,'tt [s]'              ,RX_d,RY_d,arange(0,1e-3,1e-4) ,cmesh,[]            ,fsize,'cividis',dirp+name0+'tt.png'         ,['INTERP'])
 	if 'mixH' in Vars : F_int['mixH']=fl.Visu(dird+slice_f,'xy','mixH'               ,'Mixture fraction [-]',RX_t,RY_t,arange(0,1.1,0.1  ) ,cmesh,[]            ,fsize,'viridis',dirp+name0+'Mix.png'        ,['INTERP','MIXH',[fl.Mol_m,BC_f,BC_o]])
 	if 'mix'  in Vars : F_int['mix' ]=fl.Visu(dird+slice_f,'xy','fmean'              ,'Mixture fraction [-]',RX_t,RY_t,arange(0,1.1,0.1  ) ,cmesh,[]            ,fsize,'viridis',dirp+name0+'Fmean.png'      ,['INTERP'])
 	if 'h2'   in Vars : F_int['h2'  ]=fl.Visu(dird+slice_f,'xy','h2'                 ,Titre['h2']           ,RX_t,RY_t,Ticks['h2']         ,cmesh,[]            ,fsize,'viridis',dirp+name0+'H2.png'         ,['INTERP']+Param['h2'])
-	if 'n2'   in Vars : F_int['n2'  ]=fl.Visu(dird+slice_f,'xy','n2'                 ,'Y N2 [-]'            ,RX_t,RY_t,arange(0,1.1,0.1  ) ,cmesh,[]            ,fsize,'viridis',dirp+name0+'N2.png'         ,['INTERP'])
+	if 'n2'   in Vars : F_int['n2'  ]=fl.Visu(dird+slice_f,'xy','n2'                 ,Titre['n2']           ,RX_t,RY_t,arange(0,1.1,0.1  ) ,cmesh,[]            ,fsize,'viridis',dirp+name0+'N2.png'         ,['INTERP'])
 	if 'o2'   in Vars : F_int['o2'  ]=fl.Visu(dird+slice_f,'xy','o2'                 ,Titre['o2']           ,RX_t,RY_t,Ticks['o2']         ,cmesh,BD_Vars['o2'] ,fsize,'viridis',dirp+name0+'O2.png'         ,['INTERP']+Param['o2'])
 	if 'co'   in Vars : F_int['co'  ]=fl.Visu(dird+slice_f,'xy','co'                 ,Titre['co']           ,RX_t,RY_t,Ticks['co']         ,cmesh,BD_Vars['co'] ,fsize,'viridis',dirp+name0+'CO.png'         ,['INTERP']+Param['co'])
 	if 'ch4'  in Vars : F_int['ch4' ]=fl.Visu(dird+slice_f,'xy','ch4'                ,Titre['ch4']          ,RX_t,RY_t,Ticks['ch4']        ,cmesh,[]            ,fsize,'viridis',dirp+name0+'CH4.png'        ,['INTERP']+Param['ch4'])
@@ -333,14 +321,15 @@ if VISU :
 	if not NOPROF :
 		D_int={}
 		Vy=linspace(0,0.5*D2,Np)
+		Vx=linspace(0,Lc+Lt,Np)
 		for v in Vars :
-			if v in ['Vel','k'] : D_int[v]=[ F_int[v](Np*[p],Vy) for p in Vp_v ]
-			else                : D_int[v]=[ F_int[v](Np*[p],Vy) for p in Vp_s ]
-
+			if v in ['Vel','k'] : D_int[v]=[ F_int[v](Np*[p],Vy) for p in Vp_v ]+[ F_int[v](Vx,Np*[0]) ]
+			else                : D_int[v]=[ F_int[v](Np*[p],Vy) for p in Vp_s ]+[ F_int[v](Vx,Np*[0]) ]
+			# print( len(D_int[v][-1]) )
 	if DATA :
 		util.Section( 'Data extraction : {:.3f} s'.format(time.time()-t0),1,5,'r' )
 		for v in Vars :
-			St_data=dirp+'Profiles-%s.csv'%(v)
+			St_data=dird+'Profiles-%s.csv'%(v)
 			if os.path.exists(St_data) and not OVER : util.Section('Warning : Data file %s already exists'%(St_data),0,1,'y')
 			else :
 				if os.path.exists(St_data) : util.Section('Overwriting : %s '%(St_data),0,1,'y')
@@ -386,11 +375,12 @@ if VISU :
 else : 
 	Vy=[]
 	D_int={}
-if NOPROF : sys.exit('=> Stop after visu')
+if NOPROF and not COMPA : sys.exit('=> Stop after visu')
 #%%=================================================================================
 #                     Profiles
 #===================================================================================
 def ReadTNF(name,Params) :
+	# print(name)
 	sep,skip,i0=Params[:3]
 	with open(name) as file :
 		Lines=file.readlines()
@@ -400,8 +390,29 @@ def ReadTNF(name,Params) :
 	file.closed
 	return({ s:M[:,i] for i,s in enumerate(T[:nv]) })
 #=====================================================================================
-def tpos_garnier(pos) : return('x/L_vis=%.2f'%(pos))
-def tpos_sevault(pos) : return('x(mm)=%.0f'%(pos))
+def tpos_garnier(pos) : return('z/L_vis=%.2f'%(pos))
+def tpos_sevault(pos) : return('z(mm)=%.0f'%(pos))
+def tpos_jaravel(pos) : 
+	if pos==7.5 : return('z/d=%.1f'%(pos))
+	else        : return('z/d=%.0f'%(pos))
+#=====================================================================================
+def Var_dyn(Data,Case) :
+	if   Case=='Garnier' :
+		Vel=hypot( Data['u']    , Data['v']    )
+		Tke=hypot( Data['varu'] , Data['varv'] )
+	elif Case=='Jaravel' :
+		Vel=hypot( Data['u']    , Data['v']    )
+		Tke=       Data['varu'] + Data['varv']
+	return(Vel,Tke)
+#=====================================================================================
+def plot_exp( ax , X,Y,E ) : ax.errorbar(X,Y,yerr=E*abs(Y),ecolor='k',color='k',marker='o') #,linestyle='none')
+def Plot_Exp( ax , Data,var , Cor,Err,titre,xlim) :
+	X=Data[Cor['r']]*(D0*1e3)**(Case=='Jaravel')
+	Y=Data[Cor[var]]*(1e2**(var=='co'))
+	if len(Data.keys()) > 0 : plot_exp( ax , X,Y,Err[var] )
+	ax.set_title(titre,fontsize=20)
+	ax.ticklabel_format(style='sci',axis='y',scilimits=(-2,4))
+	if xlim[1]>0 : ax.set_xlim(xlim)
 #=====================================================================================
 def PlotFile(ax,dir0,var,nc) :
 	D=util.ReadCSV(dir0+'Profiles-%s.csv'%(var)) ; Keys=list(D.keys()) #; print('D keys : ',Keys)
@@ -409,31 +420,61 @@ def PlotFile(ax,dir0,var,nc) :
 	for n,k in enumerate(Keys[1:]) :
 		i= n//nc
 		j= n-nc*i
-		ax[i,j].plot(Rad,D[k]) #,label=dir0.split('/')[-2])
+		ax[i,j].plot(Rad,D[k])
 	ax[-1,-1].plot(1,1,'.',label=dir0.split('/')[-2][5:])
 	ax[-1,-1].legend(loc='center',bbox_to_anchor=(0.5,0.5))
 #=====================================================================================
+def Plot_Axial( ax , X_sim,Y_sim , X_exp,Y_exp,E ) :
+	ax.plot( X_sim , Y_sim , 'r'  )
+	plot_exp( ax , X_exp , Y_exp , E )
+#=====================================================================================
 def Profile(ax,Vy,D_int,Data,Cor,Err,p,var,tpos,xlim) :
 	if len(Vy)>0 : grid=Vy*1e3
-	if var in D_int.keys()  : ax.plot(grid,D_int[var][p],'r')
-	if len(Data.keys()) > 0 : ax.errorbar(Data[Cor['r']],Data[Cor[var]],yerr=Err[var]*abs(Data[Cor[var]]),ecolor='k',color='k')
-	ax.set_title(tpos(Pos_s[p]),fontsize=20)
-	ax.ticklabel_format(style='sci',axis='y',scilimits=(-2,4))
-	if xlim[1]>0 : ax.set_xlim(xlim)
+	# if var=='co' : coef=1e2
+	# else         : coef=1
+	coef=1
+	if var in D_int.keys()  : ax.plot(grid,coef*D_int[var][p],'r')
+	Plot_Exp( ax , Data,var , Cor,Err,tpos(Pos_s[p]),xlim )
+	# if len(Data.keys()) > 0 : ax.errorbar(Data[Cor['r']]*D0*1e3,coef*Data[Cor[var]],yerr=Err[var]*abs(Data[Cor[var]]),ecolor='k',color='k',marker='.') #,linestyle='none')
+	# ax.set_title(tpos(Pos_s[p]),fontsize=20)
+	# ax.ticklabel_format(style='sci',axis='y',scilimits=(-2,4))
+	# if xlim[1]>0 : ax.set_xlim(xlim)
+#=====================================================================================
+def Saving(dirp,Vars,type) :
+	if 'Vel'  in Vars : util.SaveFig(figV,dirp+'Profiles-V.'+type)
+	if 'k'    in Vars : util.SaveFig(figK,dirp+'Profiles-K.'+type)
+	if 'T'    in Vars : util.SaveFig(figT,dirp+'Profiles-T.'+type)
+	if 'mixH' in Vars : util.SaveFig(figZ,dirp+'Profiles-Z.'+type)
+	if 'o2'   in Vars : util.SaveFig(figO,dirp+'Profiles-O.'+type)
+	if 'h2'   in Vars : util.SaveFig(figH,dirp+'Profiles-H.'+type)
+	if 'n2'   in Vars : util.SaveFig(figN,dirp+'Profiles-N.'+type)
+	if 'co'   in Vars : util.SaveFig(figA,dirp+'Profiles-A.'+type)
+	if 'h2o'  in Vars : util.SaveFig(figP,dirp+'Profiles-P.'+type)
+	if 'co2'  in Vars : util.SaveFig(figC,dirp+'Profiles-C.'+type)
+	if 'ch4'  in Vars : util.SaveFig(figM,dirp+'Profiles-M.'+type)
 #%%===================================================================================
+#                     Figures
+#=====================================================================================
+if   Case=='Garnier' : Params_s=( ' ',3, 0 )         ; tpos=tpos_garnier ; Rlims=Npos_s*[0]                   ; Abs=['y'  ,1     ] ; Params_v=('\t' ,11,2)
+elif Case=='Jaravel' : Params_s=('  ',3, 0 )         ; tpos=tpos_jaravel ; Rlims=[14,14,16,16,20,40,50,70,80] ; Abs=['X/D',D0*1e3] ; Params_v=(4*' ',12,-1,['X/D','u','varu','v','varv'])
+elif Case=='Sevault' : Params_s=('\t',0,-1,Vars_TNF) ; tpos=tpos_sevault ; Rlims=[5,8,11,15,20]
+#=====================================================================================
 nc=2 ; nr=Npos_s//nc+int(Npos_s%nc>0)
+if Case=='Garnier' : Nv=[3,3]
+else               : Nv=[2,0] ; Nv[1]=Npos_v//Nv[0]+int(Npos_v%Nv[0]>0)
+Nv[1]+=(Nv[1]==0)
 
-if 'Vel'  in Vars : figV,axV=plt.subplots(ncols=3 ,nrows=3 ,figsize=(13,10)) ; figV.suptitle('Velocity [m/s]'      ,fontsize=30)
-if 'k'    in Vars : figK,axK=plt.subplots(ncols=3 ,nrows=3 ,figsize=(13,10)) ; figK.suptitle('TKE [$m^2/s^2$]'     ,fontsize=30)
-if 'T'    in Vars : figT,axT=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; figT.suptitle('Temperature [K]'     ,fontsize=30)
-if 'mixH' in Vars : figZ,axZ=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; figZ.suptitle('Mixture fraction [-]',fontsize=30)
-if 'o2'   in Vars : figO,axO=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; figO.suptitle('Y O2 [-]'            ,fontsize=30)
-if 'h2'   in Vars : figH,axH=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; figH.suptitle('Y H2 [-]'            ,fontsize=30)
-if 'n2'   in Vars : figN,axN=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; figN.suptitle('Y N2 [-]'            ,fontsize=30)
-if 'co'   in Vars : figA,axA=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; figA.suptitle('Y CO [-]'            ,fontsize=30)
-if 'h2o'  in Vars : figP,axP=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; figP.suptitle('Y H2O [-]'           ,fontsize=30)
-if 'co2'  in Vars : figC,axC=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; figC.suptitle('Y CO2 [-]'           ,fontsize=30)
-if 'ch4'  in Vars : figM,axM=plt.subplots(ncols=nc,nrows=nr,figsize=(13,10)) ; figM.suptitle('Y CH4 [-]'           ,fontsize=30)
+if 'Vel'  in Vars : figV,axV=plt.subplots(ncols=Nv[0],nrows=Nv[1],figsize=(13,10)) ; figV.suptitle('Velocity [m/s]'      ,fontsize=30)
+if 'k'    in Vars : figK,axK=plt.subplots(ncols=Nv[0],nrows=Nv[1],figsize=(13,10)) ; figK.suptitle('TKE [$m^2/s^2$]'     ,fontsize=30)
+if 'T'    in Vars : figT,axT=plt.subplots(ncols=nc   ,nrows=nr   ,figsize=(13,10)) ; figT.suptitle('Temperature [K]'     ,fontsize=30)
+if 'mixH' in Vars : figZ,axZ=plt.subplots(ncols=nc   ,nrows=nr   ,figsize=(13,10)) ; figZ.suptitle('Mixture fraction [-]',fontsize=30)
+if 'o2'   in Vars : figO,axO=plt.subplots(ncols=nc   ,nrows=nr   ,figsize=(13,10)) ; figO.suptitle(r'$Y_{O_2}$ [-]'      ,fontsize=30)
+if 'h2'   in Vars : figH,axH=plt.subplots(ncols=nc   ,nrows=nr   ,figsize=(13,10)) ; figH.suptitle(r'$Y_{H_2}$ [-]'      ,fontsize=30)
+if 'n2'   in Vars : figN,axN=plt.subplots(ncols=nc   ,nrows=nr   ,figsize=(13,10)) ; figN.suptitle(r'$Y_{N_2}$ [-]'      ,fontsize=30)
+if 'co'   in Vars : figA,axA=plt.subplots(ncols=nc   ,nrows=nr   ,figsize=(13,10)) ; figA.suptitle(r'$Y_{CO}$ [-]'       ,fontsize=30)
+if 'h2o'  in Vars : figP,axP=plt.subplots(ncols=nc   ,nrows=nr   ,figsize=(13,10)) ; figP.suptitle(r'$Y_{H_2O}$ [-]'     ,fontsize=30)
+if 'co2'  in Vars : figC,axC=plt.subplots(ncols=nc   ,nrows=nr   ,figsize=(13,10)) ; figC.suptitle(r'$Y_{CO_2}$ [-]'     ,fontsize=30)
+if 'ch4'  in Vars : figM,axM=plt.subplots(ncols=nc   ,nrows=nr   ,figsize=(13,10)) ; figM.suptitle(r'$Y_{CH_4}$ [-]'     ,fontsize=30)
 if Npos_s%nc>0 : #and not COMPA :
 	if 'T'    in Vars : axT[-1,-1].axis('off')
 	if 'mixH' in Vars : axZ[-1,-1].axis('off')
@@ -444,32 +485,81 @@ if Npos_s%nc>0 : #and not COMPA :
 	if 'h2o'  in Vars : axP[-1,-1].axis('off')
 	if 'co2'  in Vars : axC[-1,-1].axis('off')
 	if 'ch4'  in Vars : axM[-1,-1].axis('off')
+#=====================================================================================
+if COMPA :
+	util.MKDIR(dirp)
+	D_compa=[ d for d in os.listdir(dirc) if d[:5]=='DATA-' ]
+	D_compa.sort()
+	#=====> Axial
+	Data_v=ReadTNF(Files_v[-1],Params_v) ; (Vel,Tke)=Var_dyn(Data_v,Case)
+	Data_s=ReadTNF(Files_s[-1],Params_s)
+	FIG_a,AX_a=[],[]
+	for v in Vars :
+		fig_a,ax_a=plt.subplots(figsize=(10,7)) ; FIG_a.append(fig_a) ; AX_a.append(ax_a)
+		ax_a.set_ylabel(Titre[v]             ,fontsize=30)
+		ax_a.set_xlabel('Axial position [mm]',fontsize=30)
+		if   v=='Vel' : plot_exp( ax_a , Data_v[Abs[0]]*Abs[1]  ,Vel                , Err[v] )
+		elif v=='k'   : plot_exp( ax_a , Data_v[Abs[0]]*Abs[1]  ,Tke                , Err[v] )
+		elif v=='co'  : plot_exp( ax_a , Data_s[Cor['r']]*D0*1e3,Data_s[Cor[v]]*1e2 , Err[v] )
+		else          : plot_exp( ax_a , Data_s[Cor['r']]*D0*1e3,Data_s[Cor[v]]     , Err[v] )
+	for d in D_compa :
+		dc=dirc+d+'/' #; print('=> Compa with : %s '%(d))
+		D=util.ReadCSV(dc+'Axial-Profiles.csv') ; Keys=list(D.keys()) #; print('D keys : ',Keys)
+		Rad=D[Keys[0]]
+		for n,v in enumerate(Vars) :
+			AX_a[n].plot(Rad,D[v],label=d[5:])
+	for n,v in enumerate(Vars) :
+		AX_a[n].legend(fontsize=20)
+		util.SaveFig(FIG_a[n],dirp+'Axial-%s.'%(v)+type)
+	#=====> Expe
+	for n,p in enumerate(IPos_s) :
+		i= n//nc
+		j= n-nc*i
+		Data=ReadTNF(Files_s[p],Params_s)
+		if 'T'    in Vars : Plot_Exp(axT[i,j],Data,'T'   ,Cor,Err,tpos(Pos_s[p]),[0,Rlims[p]])
+		if 'mixH' in Vars : Plot_Exp(axZ[i,j],Data,'mixH',Cor,Err,tpos(Pos_s[p]),[0,Rlims[p]])
+		if 'o2'   in Vars : Plot_Exp(axO[i,j],Data,'o2'  ,Cor,Err,tpos(Pos_s[p]),[0,Rlims[p]])
+		if 'h2'   in Vars : Plot_Exp(axH[i,j],Data,'h2'  ,Cor,Err,tpos(Pos_s[p]),[0,Rlims[p]])
+		if 'n2'   in Vars : Plot_Exp(axN[i,j],Data,'n2'  ,Cor,Err,tpos(Pos_s[p]),[0,Rlims[p]])
+		if 'co'   in Vars : Plot_Exp(axA[i,j],Data,'co'  ,Cor,Err,tpos(Pos_s[p]),[0,Rlims[p]])
+		if 'h2o'  in Vars : Plot_Exp(axP[i,j],Data,'h2o' ,Cor,Err,tpos(Pos_s[p]),[0,Rlims[p]])
+		if 'co2'  in Vars : Plot_Exp(axC[i,j],Data,'co2' ,Cor,Err,tpos(Pos_s[p]),[0,Rlims[p]])
+		if 'ch4'  in Vars : Plot_Exp(axM[i,j],Data,'ch4' ,Cor,Err,tpos(Pos_s[p]),[0,Rlims[p]])
+	#=====> Simu
+	for d in D_compa :
+		dc=dirc+d+'/' #; print('=> Compa with : %s '%(d))
+		if 'T'    in Vars : PlotFile(axT,dc,'T'   ,nc)
+		if 'mixH' in Vars : PlotFile(axZ,dc,'mixH',nc)
+		if 'o2'   in Vars : PlotFile(axO,dc,'o2'  ,nc)
+		if 'h2'   in Vars : PlotFile(axH,dc,'h2'  ,nc)
+		if 'n2'   in Vars : PlotFile(axN,dc,'n2'  ,nc)
+		if 'co'   in Vars : PlotFile(axA,dc,'co'  ,nc)
+		if 'h2o'  in Vars : PlotFile(axP,dc,'h2o' ,nc)
+		if 'co2'  in Vars : PlotFile(axC,dc,'co2' ,nc)
+		if 'ch4'  in Vars : PlotFile(axM,dc,'ch4' ,nc)
+	#=====> Saving
+	if NOPROF : Saving(dirp,Vars,type) ; sys.exit('=> Stop after compa')
+#=====================================================================================
 
-if Case=='Garnier' :
-	#=====> Velocity profiles
+#=====> Velocity profiles
+if Case in ['Garnier','Jaravel'] :
 	for n,p in enumerate(IPos_v) :
-		i= n//3
-		j= n-3*i
-		# Data=ReadLDV(Files_v[p])
-		Data=ReadTNF(Files_v[p],('\t',11,2))
-		Vel=hypot( Data['u'] , Data['v'] )
-		Tke=hypot( Data['varu'] , Data['varv'] )
-		if 'Vel' in Vars : axV[i,j].plot( Vy*1e3,D_int['Vel' ][p],'r' ) ; axV[i,j].plot( Data['y'],Vel,'ok' ) ; axV[i,j].set_title('x/L_vis='+Pv[n],fontsize=20) ; axV[i,j].ticklabel_format(style='sci',axis='y',scilimits=(-2,4)) ; axV[i,j].set_xlim((0,Rlims[n]))
-		if 'k'   in Vars : axK[i,j].plot( Vy*1e3,D_int['k'   ][p],'r' ) ; axK[i,j].plot( Data['y'],Tke,'ok' ) ; axK[i,j].set_title('x/L_vis='+Pv[n],fontsize=20) ; axK[i,j].ticklabel_format(style='sci',axis='y',scilimits=(-2,4)) ; axK[i,j].set_xlim((0,Rlims[n]))
-		if i==2 : 
+		i= n//Nv[0]
+		j= n-Nv[0]*i
+		Data=ReadTNF(Files_v[p],Params_v)
+		(Vel,Tke)=Var_dyn(Data,Case)
+		if 'Vel' in Vars : axV[i,j].plot( Vy*1e3,D_int['Vel' ][p],'r' ) ; axV[i,j].plot( Data[Abs[0]]*Abs[1],Vel,'-ok' ) ; axV[i,j].set_title(tpos(Pos_v[n]),fontsize=20) ; axV[i,j].ticklabel_format(style='sci',axis='y',scilimits=(-2,4)) ; axV[i,j].set_xlim((0,Rlims[n]))
+		if 'k'   in Vars : axK[i,j].plot( Vy*1e3,D_int['k'   ][p],'r' ) ; axK[i,j].plot( Data[Abs[0]]*Abs[1],Tke,'-ok' ) ; axK[i,j].set_title(tpos(Pos_v[n]),fontsize=20) ; axK[i,j].ticklabel_format(style='sci',axis='y',scilimits=(-2,4)) ; axK[i,j].set_xlim((0,Rlims[n]))
+		if i==Nv[1]-1 : 
 			if 'Vel' in Vars : axV[i,j].set_xlabel('r [mm]',fontsize=20)
 			if 'k'   in Vars : axK[i,j].set_xlabel('r [mm]',fontsize=20)
 	if 'Vel' in Vars : axV[0,0].plot( [0,Rlims[0]],2*[Umoy],':k' )
 
-if   Case=='Garnier' : Params=( ' ',3, 0 )         ; tpos=tpos_garnier ; Rlims=Npos_s*[0]
-elif Case=='Sevault' : Params=('\t',0,-1,Vars_TNF) ; tpos=tpos_sevault ; Rlims=[5,8,11,15,20]
-elif Case=='PRECIZE' : Params=0
-else : sys.exit('=> Error : Case not built yet')
 #=====> Scattering
 for n,p in enumerate(IPos_s) :
 	i= n//nc
 	j= n-nc*i
-	Data=ReadTNF(Files_s[p],Params)
+	Data=ReadTNF(Files_s[p],Params_s)
 	if 'T'    in Vars : Profile(axT[i,j],Vy,D_int,Data,Cor,Err,p,'T'   ,tpos,[0,Rlims[p]])
 	if 'mixH' in Vars : Profile(axZ[i,j],Vy,D_int,Data,Cor,Err,p,'mixH',tpos,[0,Rlims[p]])
 	if 'o2'   in Vars : Profile(axO[i,j],Vy,D_int,Data,Cor,Err,p,'o2'  ,tpos,[0,Rlims[p]])
@@ -489,47 +579,42 @@ for n,p in enumerate(IPos_s) :
 		if 'h2o'  in Vars : axP[i,j].set_xlabel('r [mm]',fontsize=20)
 		if 'co2'  in Vars : axC[i,j].set_xlabel('r [mm]',fontsize=20)
 		if 'ch4'  in Vars : axM[i,j].set_xlabel('r [mm]',fontsize=20)
-	if j==0 and i==1 : 
+	if j==0 :
 		if 'T'    in Vars : axT[i,j].set_ylabel(r'$T~[K]$'       ,fontsize=20)
 		if 'mixH' in Vars : axZ[i,j].set_ylabel(r'$Z~[-]$'       ,fontsize=20)
 		if 'o2'   in Vars : axO[i,j].set_ylabel(r'$Y_{O_2}~[-]$' ,fontsize=20)
 		if 'h2'   in Vars : axH[i,j].set_ylabel(r'$Y_{H_2}~[-]$' ,fontsize=20)
 		if 'n2'   in Vars : axN[i,j].set_ylabel(r'$Y_{N_2}~[-]$' ,fontsize=20)
-		if 'co'   in Vars : axA[i,j].set_ylabel(r'$Y_{CO}~[-]$'  ,fontsize=20)
+		if 'co'   in Vars : axA[i,j].set_ylabel(r'$Y_{CO}~[\%]$' ,fontsize=20)
 		if 'h2o'  in Vars : axP[i,j].set_ylabel(r'$Y_{H_2O}~[-]$',fontsize=20)
 		if 'co2'  in Vars : axC[i,j].set_ylabel(r'$Y_{CO_2}~[-]$',fontsize=20)
 		if 'ch4'  in Vars : axM[i,j].set_ylabel(r'$Y_{CH_4}~[-]$',fontsize=20)
 
-if COMPA :
-	dirp=dirc+'PLOT/'
-	# D_compa=[ d for d in os.listdir(dirc) if d[:5]=='PLOT-' ]
-	D_compa=[ d for d in os.listdir(dirc) if d[:5]=='PLOT-' ]
-	D_compa.sort()
-	for d in D_compa :
-		dc=dirc+d+'/'
-		if 'T'    in Vars : PlotFile(axT,dc,'T'   ,nc)
-		if 'mixH' in Vars : PlotFile(axZ,dc,'mixH',nc)
-		if 'o2'   in Vars : PlotFile(axO,dc,'o2'  ,nc)
-		if 'h2'   in Vars : PlotFile(axH,dc,'h2'  ,nc)
-		if 'n2'   in Vars : PlotFile(axN,dc,'n2'  ,nc)
-		if 'co'   in Vars : PlotFile(axA,dc,'co'  ,nc)
-		if 'h2o'  in Vars : PlotFile(axP,dc,'h2o' ,nc)
-		if 'co2'  in Vars : PlotFile(axC,dc,'co2' ,nc)
-		if 'ch4'  in Vars : PlotFile(axM,dc,'ch4' ,nc)
+#=====> Axial profiles
+if Case=='Jaravel' :
+	Data_v=ReadTNF(Files_v[-1],Params_v) ; (Vel,Tke)=Var_dyn(Data_v,Case)
+	Data_s=ReadTNF(Files_s[-1],Params_s)
+	M_d=zeros((Np,len(Vars)))
+	for n,v in enumerate(Vars) :
+		M_d[:,n]=D_int[v][-1]
+		figA,axA=plt.subplots(figsize=(10,7))
+		# figA.suptitle(Titre[v],fontsize=30)
+		axA.set_ylabel(Titre[v]             ,fontsize=30)
+		axA.set_xlabel('Axial position [mm]',fontsize=30)
+		if   v=='Vel' : Plot_Axial( axA , Vx*1e3,D_int[v][-1] , Data_v[Abs[0]]*Abs[1]  ,Vel                , Err[v] )
+		elif v=='k'   : Plot_Axial( axA , Vx*1e3,D_int[v][-1] , Data_v[Abs[0]]*Abs[1]  ,Tke                , Err[v] )
+		elif v=='co'  : Plot_Axial( axA , Vx*1e3,D_int[v][-1] , Data_s[Cor['r']]*D0*1e3,Data_s[Cor[v]]*1e2 , Err[v] )
+		else          : Plot_Axial( axA , Vx*1e3,D_int[v][-1] , Data_s[Cor['r']]*D0*1e3,Data_s[Cor[v]]     , Err[v] )
+		if SAVE : util.SaveFig(figA,dirp+'Axial-%s.'%(v)+type)
+	if DATA :
+		St_data=dird+'Axial-Profiles.csv'
+		with open(St_data,'w') as file :
+			writer=csv.writer(file)
+			writer.writerow( ['x(mm)'] + Vars )
+			writer.writerows( column_stack( ( Vx*1e3 , M_d ) ) )
+		file.closed
 
-if SAVE :
-	if 'Vel'  in Vars : util.SaveFig(figV,dirp+'Profiles-V.pdf')
-	if 'k'    in Vars : util.SaveFig(figK,dirp+'Profiles-K.pdf')
-	if 'T'    in Vars : util.SaveFig(figT,dirp+'Profiles-T.pdf')
-	if 'mixH' in Vars : util.SaveFig(figZ,dirp+'Profiles-Z.pdf')
-	if 'o2'   in Vars : util.SaveFig(figO,dirp+'Profiles-O.pdf')
-	if 'h2'   in Vars : util.SaveFig(figH,dirp+'Profiles-H.pdf')
-	if 'n2'   in Vars : util.SaveFig(figN,dirp+'Profiles-N.pdf')
-	if 'co'   in Vars : util.SaveFig(figA,dirp+'Profiles-A.pdf')
-	if 'h2o'  in Vars : util.SaveFig(figP,dirp+'Profiles-P.pdf')
-	if 'co2'  in Vars : util.SaveFig(figC,dirp+'Profiles-C.pdf')
-	if 'ch4'  in Vars : util.SaveFig(figM,dirp+'Profiles-M.pdf')
-else :
-	util.Section('No Saving',0,1,'y')
-	# plt.show()
-# %%
+#=====================================================================================
+if SAVE : Saving(dirp,Vars,type)
+else    : util.Section('No Saving',0,1,'y')
+#=====================================================================================
