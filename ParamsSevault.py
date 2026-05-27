@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-flame='e'
+flame='a'
 
 #=====> Dimensions
 D0=  5e-3
@@ -15,18 +15,30 @@ ep=D1-D0
 #====================> Directories IN
 dir0='/mnt/beegfs/ZEUS/'
 dirs=dir0+'Python/Sandia/DATA-Oxy/Mean_RMS/'
+dirc=dir0+'/FLUENT/Sandia-Sevault/COMPA-A-EDC-EDM/'
 # dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP/'
 # dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-00-A-EDC/'
 # dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-01-A-Dyn/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-01-A-Cv3-Ct03/'
 # dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-02-B-EDC/'
 # dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-00-D-EDC/'
-dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-02-C-EDC/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-02-C-EDC/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-02-F-Vpol/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-01-EDC/DUMP-03-F-Dyn/'
 # dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-02-EDM/DUMP/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-02-EDM/DUMP-03-A-CO/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-02-EDM/DUMP-03-B-CO/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-02-EDM/DUMP-03-C-CO/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-02-EDM/DUMP-03-F-CO/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-03-PDF/DUMP/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-03-PDF/DUMP-01-A-SLF/'
+# dirc=dir0+'/FLUENT/Sandia-Sevault/RUN-03-PDF/DUMP-03-A-FGM/'
 if   '-A-' in dirc : flame='a'
 elif '-B-' in dirc : flame='b'
 elif '-C-' in dirc : flame='c'
 elif '-D-' in dirc : flame='d'
 elif '-E-' in dirc : flame='e'
+elif '-F-' in dirc : flame='f'
 
 #====================> Case
 if   flame=='a' : re=15 ; h2=55  ; Umoy=98.2  ; Uox=0.778
@@ -34,6 +46,7 @@ elif flame=='b' : re=15 ; h2=45  ; Umoy=84.5  ; Uox=0.755
 elif flame=='c' : re=15 ; h2=37  ; Umoy=75.8  ; Uox=0.739
 elif flame=='d' : re=12 ; h2=55  ; Umoy=78.6  ; Uox=0.622
 elif flame=='e' : re=18 ; h2=55  ; Umoy=117.8 ; Uox=0.933
+elif flame=='f' : re=15 ; h2=100 ; Umoy=198.7 ; Uox=0.877
 ch4=100-h2
 
 #=====> Boundary conditions
@@ -76,12 +89,12 @@ Vars_TNF=[
 Cor={
 # 'r'   :'xmm'  ,
 'r'   :'shot'  ,
-# 'T'   :'Tray' ,
-'T'   :'Tpg' ,
+'T'   :'Tray' ,
+# 'T'   :'Tpg' ,
 'Tpg' :'Tpg'  ,
 'Rho' :'dens' ,
 'mix' :'phi'  ,
-'mixH':'FH'   ,
+'mixH':'FH' ,
 'mixC':'FC'   ,
 'o2'  :'O2'   ,
 'h2'  :'H2'   ,

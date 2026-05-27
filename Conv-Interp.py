@@ -42,7 +42,7 @@ file_ou=file_in[:-3]+'-New.ip'
 # Adds=['H2Rad','Ignit']
 # Adds=['Ignit']
 # Adds=['Laera','Ignit']
-Adds=['Walter']
+# Adds=['Walter']
 
 Fuel='H2'
 dil=10
